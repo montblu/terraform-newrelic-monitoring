@@ -26,8 +26,8 @@ resource "newrelic_notification_destination" "synthetics" {
     value = var.newrelic_synthetics_notification_destination.property[value]
   }
   auth_token {
-    prefix = var.newrelic_synthetics_notification_destination.auth_token[prefix]
-    token  = var.newrelic_synthetics_notification_destination.auth_token[token]
+    prefix = var.auth_token_prefix
+    token  = var.auth_token_token
   }
 }
 
@@ -64,7 +64,7 @@ resource "newrelic_workflow" "synthetic_monitors" {
   }
   destination {
     channel_id            = var.newrelic_synthetics_workflow.destination.channel_id
-    notification_triggers = var.newrelic_synthetics_workflow.destination.notification_triggers
+    notification_triggers = var.notification_triggers
   }
 }
 
@@ -225,7 +225,7 @@ resource "newrelic_workflow" "critical_apm_response_time" {
   }
   destination {
     channel_id            = var.newrelic_workflow_critical_apm_response_time.destination.channel_id
-    notification_triggers = var.newrelic_workflow_critical_apm_response_time.destination.notification_triggers
+    notification_triggers = var.notification_triggers
   }
 }
 
@@ -246,7 +246,7 @@ resource "newrelic_workflow" "critical_apm_error_rate" {
   }
   destination {
     channel_id            = var.newrelic_workflow_critical_apm_error_rate.destination.channel_id
-    notification_triggers = var.newrelic_workflow_critical_apm_error_rate.destination.notification_triggers
+    notification_triggers = var.notification_triggers
   }
 }
 
@@ -357,7 +357,7 @@ resource "newrelic_workflow" "non_critical_apm_response_time" {
   }
   destination {
     channel_id            = var.newrelic_workflow_non_critical_apm_response_time.destination.channel_id
-    notification_triggers = var.newrelic_workflow_non_critical_apm_response_time.destination.notification_triggers
+    notification_triggers = var.notification_triggers
   }
 }
 
@@ -377,7 +377,7 @@ resource "newrelic_workflow" "non_critical_apm_error_rate" {
   }
   destination {
     channel_id            = var.newrelic_workflow_non_critical_apm_error_rate.destination.channel_id
-    notification_triggers = var.newrelic_workflow_non_critical_apm_error_rate.destination.notification_triggers
+    notification_triggers = var.notification_triggers
   }
 }
 
