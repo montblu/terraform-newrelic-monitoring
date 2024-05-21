@@ -11,6 +11,22 @@ data "pagerduty_vendor" "vendor" {
   name = each.key
 }
 
+variable "auth_token_prefix" {
+  description = "To be used in notification destination"
+  type        = string
+  default     = "service-integration-id"
+}
+
+variable "auth_token_token" {
+  description = "The auth token"
+  type        = string
+}
+
+variable "notification_triggers" {
+  description = "The condition trigger to generate a notification (used in workflows)"
+  type        = list(string)
+  default     = ["ACTIVATED", "CLOSED"]
+}
 
 variable "pagerduty_escalation_policy_slack" {
   type    = string
@@ -77,11 +93,21 @@ variable "newrelic_synthetics_alert_policy" {
 
 variable "newrelic_synthetics_notification_destination" {
   type = object({
-    name       = string
-    type       = string
-    property   = string(object({ key = string, value = string }), "")
-    auth_token = map(object({ prefix = "service-integration-id", token = string }))
+    name = string
+    type = string
+    property = object({
+      key   = string
+      value = string
+    })
   })
+  default = {
+    name = "resource-notification-destination"
+    type = "PAGERDUTY_SERVICE_INTEGRATION"
+    property = {
+      key   = ""
+      value = ""
+    }
+  }
 }
 
 variable "newrelic_synthetics_notification_channel" {
@@ -111,8 +137,7 @@ variable "newrelic_synthetics_workflow" {
       }))
     }))
     destination = list(object({
-      channel_id            = any
-      notification_triggers = optional(list(string, ["ACTIVATED", "CLOSED"]))
+      channel_id = any
     }))
   })
 }
@@ -282,8 +307,7 @@ variable "newrelic_workflow_critical_apm_response_time" {
     })
 
     destination = object({
-      channel_id            = string
-      notification_triggers = optional(list(string, ["ACTIVATED", "CLOSED"]))
+      channel_id = string
     })
   })
 }
@@ -305,8 +329,7 @@ variable "newrelic_workflow_critical_apm_error_rate" {
     })
 
     destination = object({
-      channel_id            = string
-      notification_triggers = optional(list(string, ["ACTIVATED", "CLOSED"]))
+      channel_id = string
     })
   })
 }
@@ -423,8 +446,7 @@ variable "newrelic_workflow_non_critical_apm_response_time" {
     })
 
     destination = object({
-      channel_id            = string
-      notification_triggers = optional(list(string, ["ACTIVATED", "CLOSED"]))
+      channel_id = string
     })
   })
 }
@@ -445,8 +467,7 @@ variable "newrelic_workflow_non_critical_apm_error_rate" {
       })
     })
     destination = object({
-      channel_id            = string
-      notification_triggers = optional(list(string, ["ACTIVATED", "CLOSED"]))
+      channel_id = string
     })
   })
 }
