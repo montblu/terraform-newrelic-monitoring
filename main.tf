@@ -1,44 +1,48 @@
-# Synthetic monitors
-
 resource "newrelic_synthetics_monitor" "all" {
-  name                = var.synthetic_monitors.name
-  type                = var.synthetic_monitors.type
-  period              = var.synthetic_monitors.period
-  status              = var.synthetic_monitors.status
-  locations_public    = var.synthetic_monitors.locations_public
-  uri                 = var.synthetic_monitors.uri
-  validation_string   = var.synthetic_monitors.validation_string
-  verify_ssl          = var.synthetic_monitors.verify_ssl
-  bypass_head_request = var.synthetic_monitors.bypass_head_request
+  for_each            = { for monitor in var.synthetic_monitors : monitor.name => monitor }
+  name                = each.value.name
+  type                = each.value.type
+  period              = each.value.period
+  status              = each.value.status
+  locations_public    = each.value.locations_public
+  uri                 = each.value.uri
+  validation_string   = each.value.validation_string
+  verify_ssl          = each.value.verify_ssl
+  bypass_head_request = each.value.bypass_head_request
 }
 
-resource "newrelic_alert_policy" "synthetics" {
-  name                = var.newrelic_synthetics_alert_policy.name
-  incident_preference = var.newrelic_synthetics_alert_policy.incident_preference
+resource "newrelic_alert_policy" "this" {
+  for_each = { for policy in var.newrelic_alert_policy : policy.name => policy }
+
+  name                = each.value.name
+  incident_preference = each.value.incident_preference
 }
 
-resource "newrelic_notification_destination" "synthetics" {
-  name = var.newrelic_synthetics_notification_destination.name
-  type = var.newrelic_synthetics_notification_destination.type
+resource "newrelic_notification_destination" "this" {
+  for_each = { for destination in var.newrelic_notification_destination : destination.name => destination }
+
+  name = each.value.name
+  type = each.value.type
 
   property {
-    key   = var.newrelic_synthetics_notification_destination.property[key]
-    value = var.newrelic_synthetics_notification_destination.property[value]
+    key   = each.value.property[0].key
+    value = each.value.property[0].value
   }
   auth_token {
-    prefix = var.auth_token_prefix
-    token  = var.auth_token_token
+    prefix = each.value.auth_token[0].prefix
+    token  = each.value.auth_token[0].token
   }
 }
 
-resource "newrelic_notification_channel" "synthetics" {
-  name           = var.newrelic_synthetic_notification_channel.name
-  type           = var.newrelic_synthetic_notification_channel.type
-  destination_id = var.newrelic_synthetic_notification_channel.destination_id
-  product        = var.newrelic_synthetic_notification_channel.product
+resource "newrelic_notification_channel" "this" {
+  for_each       = { for channel in var.newrelic_notification_channel : channel.name => channel }
+  name           = each.value.name
+  type           = each.value.type
+  destination_id = each.value.destination_id
+  product        = each.value.product
 
   dynamic "property" {
-    for_each = var.newrelic_synthetic_notification_channel.property
+    for_each = each.value.property
     content {
       key   = property.value.key
       value = property.value.value
@@ -46,405 +50,74 @@ resource "newrelic_notification_channel" "synthetics" {
   }
 }
 
-resource "newrelic_workflow" "synthetic_monitors" {
-
-  name                  = var.newrelic_synthetics_workflow.name
-  muting_rules_handling = var.newrelic_synthetics_workflow.muting_rules_handling
+resource "newrelic_workflow" "this" {
+  for_each              = { for workflow in var.newrelic_workflow : workflow.name => workflow }
+  name                  = each.value.name
+  muting_rules_handling = each.value.muting_rules_handling
   issues_filter {
-    name = var.newrelic_synthetics_workflow.issues_filter.name
-    type = var.newrelic_synthetics_workflow.issues_filter.type
+    name = each.value.issues_filter[0].name
+    type = each.value.issues_filter[0].type
     # name and type are required but not really relevant:
     # https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/workflow#type
 
     predicate {
-      attribute = var.newrelic_synthetics_workflow.predicate.attribute
-      operator  = var.newrelic_synthetics_workflow.predicate.operator
-      values    = var.newrelic_synthetics_workflow.predicate.values
+      attribute = each.value.issues_filter[0].predicate[0].attribute
+      operator  = each.value.issues_filter[0].predicate[0].operator
+      values    = [each.value.issues_filter[0].predicate[0].values]
     }
   }
   destination {
-    channel_id            = var.newrelic_synthetics_workflow.destination.channel_id
-    notification_triggers = var.notification_triggers
+    channel_id            = each.value.destination[0].channel_id
+    notification_triggers = each.value.destination[0].notification_triggers
   }
 }
 
-resource "newrelic_nrql_alert_condition" "critical_monitor_health" {
+resource "newrelic_nrql_alert_condition" "this" {
+  for_each = { for alert_condition in var.newrelic_nrql_alert_condition : alert_condition.name => alert_condition }
 
-  policy_id   = var.newrelic_nrql_critical_alert_condition.policy_id
-  name        = var.newrelic_nrql_critical_alert_condition.name
-  description = var.newrelic_nrql_critical_alert_condition.description
-  enabled     = var.newrelic_nrql_critical_alert_condition.enabled
+  policy_id   = each.value.policy_id
+  name        = each.value.name
+  description = each.value.description
+  enabled     = each.value.enabled
 
   nrql {
-    query = var.newrelic_nrql_critical_alert_condition.nrql.query
+    query = each.value.nrql.query
   }
   critical {
-    operator              = var.newrelic_nrql_critical_alert_condition.critical.operator
-    threshold             = var.newrelic_nrql_critical_alert_condition.critical.threshold
-    threshold_duration    = var.newrelic_nrql_critical_alert_condition.critical.threshold_duration
-    threshold_occurrences = var.newrelic_nrql_critical_alert_condition.critical.threshold_occurrences
-  }
-  expiration_duration            = var.newrelic_nrql_critical_alert_condition.expiration_duration
-  open_violation_on_expiration   = var.newrelic_nrql_critical_alert_condition.open_violation_on_expiration
-  close_violations_on_expiration = var.newrelic_nrql_critical_alert_condition.close_violations_on_expiration
-  aggregation_window             = var.newrelic_nrql_critical_alert_condition.aggregation_window
-}
-
-resource "newrelic_nrql_alert_condition" "non_critical_monitor_health" {
-
-  policy_id   = var.newrelic_nrql_non_critical_monitor_alert_condition.policy_id
-  name        = var.newrelic_nrql_non_critical_monitor_alert_condition.name
-  description = var.newrelic_nrql_non_critical_monitor_alert_condition.description
-  enabled     = var.newrelic_nrql_non_critical_monitor_alert_condition.enabled
-
-  nrql {
-    query = var.newrelic_nrql_non_critical_monitor_alert_condition.nrql.query
+    operator              = each.value.critical[0].operator
+    threshold             = each.value.critical[0].threshold
+    threshold_duration    = each.value.critical[0].threshold_duration
+    threshold_occurrences = each.value.critical[0].threshold_occurrences
   }
   warning {
-    operator              = var.newrelic_nrql_non_critical_monitor_alert_condition.warning.operator
-    threshold             = var.newrelic_nrql_non_critical_monitor_alert_condition.warning.threshold
-    threshold_duration    = var.newrelic_nrql_non_critical_monitor_alert_condition.warning.threshold_duration
-    threshold_occurrences = var.newrelic_nrql_non_critical_monitor_alert_condition.warning.threshold_occurrences
+    operator              = each.value.warning[0].operator
+    threshold             = each.value.warning[0].threshold
+    threshold_duration    = each.value.warning[0].threshold_duration
+    threshold_occurrences = each.value.warning[0].threshold_occurrences
   }
-  expiration_duration            = var.newrelic_nrql_non_critical_monitor_alert_condition.expiration_duration
-  open_violation_on_expiration   = var.newrelic_nrql_non_critical_monitor_alert_condition.open_violation_on_expiration
-  close_violations_on_expiration = var.newrelic_nrql_non_critical_monitor_alert_condition.close_violations_on_expiration
-  aggregation_window             = var.newrelic_nrql_non_critical_monitor_alert_condition.aggregation_window
+  expiration_duration            = each.value.expiration_duration
+  open_violation_on_expiration   = each.value.open_violation_on_expiration
+  close_violations_on_expiration = each.value.close_violations_on_expiration
+  aggregation_window             = each.value.aggregation_window
 }
 
-# APM
-
-# Critical APM resources
-
-resource "newrelic_notification_destination" "critical_apm" {
-  name = var.newrelic_notification_destination_critical_apm.name
-  type = var.newrelic_notification_destination_critical_apm.type
-
-  property {
-    key   = var.newrelic_notification_destination_critical_apm.property.key
-    value = var.newrelic_notification_destination_critical_apm.property.value
-  }
-  auth_token {
-    prefix = var.newrelic_notification_destination_critical_apm.auth_token.prefix
-    token  = var.newrelic_notification_destination_critical_apm.auth_token.token
-  }
-}
-
-resource "newrelic_alert_policy" "critical_apm_response_time" {
-  name                = var.newrelic_alert_policy_critical_apm_response_time.name
-  incident_preference = var.newrelic_alert_policy_critical_apm_response_time.incident_preference
-}
-
-resource "newrelic_alert_policy" "critical_apm_error_rate" {
-  name                = var.newrelic_alert_policy_critical_apm_error_rate.name
-  incident_preference = var.newrelic_alert_policy_critical_apm_error_rate.incident_preference
-}
-
-resource "newrelic_notification_channel" "critical_apm_response_time" {
-
-  name           = var.newrelic_notification_channel_critical_apm_response_time.name
-  type           = var.newrelic_notification_channel_critical_apm_response_time.type
-  destination_id = var.newrelic_notification_channel_critical_apm_response_time.destination_id
-  product        = var.newrelic_notification_channel_critical_apm_response_time.product
-
-  dynamic "property" {
-    for_each = var.newrelic_notification_channel_critical_apm_response_time.property
-    content {
-      key   = property.value.key
-      value = property.value.value
-    }
-  }
-}
-
-resource "newrelic_notification_channel" "critical_apm_error_rate" {
-
-  name           = var.newrelic_notification_channel_critical_apm_error_rate.name
-  type           = var.newrelic_notification_channel_critical_apm_error_rate.type
-  destination_id = var.newrelic_notification_channel_critical_apm_error_rate.destination_id
-  product        = var.newrelic_notification_channel_critical_apm_error_rate.product
-
-  dynamic "property" {
-    for_each = var.newrelic_notification_channel_critical_apm_error_rate.property
-    content {
-      key   = property.value.key
-      value = property.value.value
-    }
-  }
-}
-
-resource "newrelic_nrql_alert_condition" "critical_response_time" {
-
-  policy_id   = var.newrelic_nrql_alert_condition_critical_response_time.policy_id
-  name        = var.newrelic_nrql_alert_condition_critical_response_time.name
-  description = var.newrelic_nrql_alert_condition_critical_response_time.description
-  enabled     = var.newrelic_nrql_alert_condition_critical_response_time.enabled
-
-  nrql {
-    query = var.newrelic_nrql_alert_condition_critical_response_time.nrql.query
-  }
-  critical {
-    operator              = var.newrelic_nrql_alert_condition_critical_response_time.critical.operator
-    threshold             = var.newrelic_nrql_alert_condition_critical_response_time.critical.threshold
-    threshold_duration    = var.newrelic_nrql_alert_condition_critical_response_time.critical.threshold_duration
-    threshold_occurrences = var.newrelic_nrql_alert_condition_critical_response_time.critical.threshold_occurrences
-  }
-}
-
-resource "newrelic_nrql_alert_condition" "critical_error_rate" {
-
-  policy_id   = var.newrelic_nrql_alert_condition_critical_error_rate.policy_id
-  name        = var.newrelic_nrql_alert_condition_critical_error_rate.name
-  description = var.newrelic_nrql_alert_condition_critical_error_rate.description
-  enabled     = var.newrelic_nrql_alert_condition_critical_error_rate.enabled
-
-  nrql {
-    query = var.newrelic_nrql_alert_condition_critical_error_rate.nrql.query
-  }
-  critical {
-    operator              = var.newrelic_nrql_alert_condition_critical_error_rate.critical.operator
-    threshold             = var.newrelic_nrql_alert_condition_critical_error_rate.critical.threshold
-    threshold_duration    = var.newrelic_nrql_alert_condition_critical_error_rate.critical.threshold_duration
-    threshold_occurrences = var.newrelic_nrql_alert_condition_critical_error_rate.critical.threshold_occurrences
-  }
-}
-
-resource "newrelic_workflow" "critical_apm_response_time" {
-
-  name                  = var.newrelic_workflow_critical_apm_response_time.name
-  muting_rules_handling = var.newrelic_workflow_critical_apm_response_time.muting_rules_handling
-
-  issues_filter {
-    name = var.newrelic_workflow_critical_apm_response_time.issues_filter.name
-    type = var.newrelic_workflow_critical_apm_response_time.issues_filter.type
-
-    predicate {
-      attribute = var.newrelic_workflow_critical_apm_response_time.predicate.attribute
-      operator  = var.newrelic_workflow_critical_apm_response_time.predicate.operator
-      values    = var.newrelic_workflow_critical_apm_response_time.predicate.values
-    }
-  }
-  destination {
-    channel_id            = var.newrelic_workflow_critical_apm_response_time.destination.channel_id
-    notification_triggers = var.notification_triggers
-  }
-}
-
-resource "newrelic_workflow" "critical_apm_error_rate" {
-
-  name                  = var.newrelic_workflow_critical_apm_error_rate.name
-  muting_rules_handling = var.newrelic_workflow_critical_apm_error_rate.muting_rules_handling
-
-  issues_filter {
-    name = var.newrelic_workflow_critical_apm_error_rate.issues_filter.name
-    type = var.newrelic_workflow_critical_apm_error_rate.issues_filter.type
-
-    predicate {
-      attribute = var.newrelic_workflow_critical_apm_error_rate.predicate.attribute
-      operator  = var.newrelic_workflow_critical_apm_error_rate.predicate.operator
-      values    = var.newrelic_workflow_critical_apm_error_rate.predicate.values
-    }
-  }
-  destination {
-    channel_id            = var.newrelic_workflow_critical_apm_error_rate.destination.channel_id
-    notification_triggers = var.notification_triggers
-  }
-}
-
-# Non-Critical APM resources
-
-resource "newrelic_notification_destination" "non_critical_apm" {
-  name = var.newrelic_notification_destination_non_critical_apm.name
-  type = var.newrelic_notification_destination_non_critical_apm.type
-
-  property {
-    key   = var.newrelic_notification_destination_non_critical_apm.property.key
-    value = var.newrelic_notification_destination_non_critical_apm.property.value
-  }
-  auth_token {
-    prefix = var.newrelic_notification_destination_non_critical_apm.auth_token.prefix
-    token  = var.newrelic_notification_destination_non_critical_apm.auth_token.token
-  }
-}
-
-resource "newrelic_alert_policy" "non_critical_apm_response_time" {
-  name                = var.newrelic_alert_policy_non_critical_apm_response_time.name
-  incident_preference = var.newrelic_alert_policy_non_critical_apm_response_time.incident_preference
-}
-
-resource "newrelic_alert_policy" "non_critical_apm_error_rate" {
-  name                = var.newrelic_alert_policy_non_critical_apm_error_rate.name
-  incident_preference = var.newrelic_alert_policy_non_critical_apm_error_rate.incident_preference
-}
-
-resource "newrelic_notification_channel" "non_critical_apm_response_time" {
-  name           = var.newrelic_notification_channel_non_critical_apm_response_time.name
-  type           = var.newrelic_notification_channel_non_critical_apm_response_time.type
-  destination_id = var.newrelic_notification_channel_non_critical_apm_response_time.destination_id
-  product        = var.newrelic_notification_channel_non_critical_apm_response_time.product
-
-  dynamic "property" {
-    for_each = var.newrelic_notification_channel_non_critical_apm_response_time.property
-    content {
-      key   = property.value.key
-      value = property.value.value
-    }
-  }
-}
-
-resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
-  name           = var.newrelic_notification_channel_non_critical_apm_error_rate.name
-  type           = var.newrelic_notification_channel_non_critical_apm_error_rate.type
-  destination_id = var.newrelic_notification_channel_non_critical_apm_error_rate.destination_id
-  product        = var.newrelic_notification_channel_non_critical_apm_error_rate.product
-
-  dynamic "property" {
-    for_each = var.newrelic_notification_channel_non_critical_apm_error_rate.property
-    content {
-      key   = property.value.key
-      value = property.value.value
-    }
-  }
-}
-
-resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
-  policy_id   = var.newrelic_nrql_alert_condition_non_critical_response_time.policy_id
-  name        = var.newrelic_nrql_alert_condition_non_critical_response_time.name
-  description = var.newrelic_nrql_alert_condition_non_critical_response_time.description
-  enabled     = var.newrelic_nrql_alert_condition_non_critical_response_time.enabled
-
-  nrql {
-    query = var.newrelic_nrql_alert_condition_non_critical_response_time.nrql.query
-  }
-  warning {
-    operator              = var.newrelic_nrql_alert_condition_non_critical_response_time.warning.operator
-    threshold             = var.newrelic_nrql_alert_condition_non_critical_response_time.warning.threshold
-    threshold_duration    = var.newrelic_nrql_alert_condition_non_critical_response_time.warning.threshold_duration
-    threshold_occurrences = var.newrelic_nrql_alert_condition_non_critical_response_time.warning.threshold_occurrences
-  }
-}
-
-resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
-
-  policy_id   = var.newrelic_nrql_alert_condition_non_critical_error_rate.policy_id
-  name        = var.newrelic_nrql_alert_condition_non_critical_error_rate.name
-  description = var.newrelic_nrql_alert_condition_non_critical_error_rate.description
-  enabled     = var.newrelic_nrql_alert_condition_non_critical_error_rate.enabled
-
-  nrql {
-    query = var.newrelic_nrql_alert_condition_non_critical_error_rate.nrql.query
-  }
-  warning {
-    operator              = var.newrelic_nrql_alert_condition_non_critical_error_rate.warning.operator
-    threshold             = var.newrelic_nrql_alert_condition_non_critical_error_rate.warning.threshold
-    threshold_duration    = var.newrelic_nrql_alert_condition_non_critical_error_rate.warning.threshold_duration
-    threshold_occurrences = var.newrelic_nrql_alert_condition_non_critical_error_rate.warning.threshold_occurrences
-  }
-}
-
-resource "newrelic_workflow" "non_critical_apm_response_time" {
-  name                  = var.newrelic_workflow_non_critical_apm_response_time.name
-  muting_rules_handling = var.newrelic_workflow_non_critical_apm_response_time.muting_rules_handling
-
-  issues_filter {
-    name = var.newrelic_workflow_non_critical_apm_response_time.issues_filter.name
-    type = var.newrelic_workflow_non_critical_apm_response_time.issues_filter.type
-
-    predicate {
-      attribute = var.newrelic_workflow_non_critical_apm_response_time.predicate.attribute
-      operator  = var.newrelic_workflow_non_critical_apm_response_time.predicate.operator
-      values    = var.newrelic_workflow_non_critical_apm_response_time.predicate.values
-    }
-  }
-  destination {
-    channel_id            = var.newrelic_workflow_non_critical_apm_response_time.destination.channel_id
-    notification_triggers = var.notification_triggers
-  }
-}
-
-resource "newrelic_workflow" "non_critical_apm_error_rate" {
-  name                  = var.newrelic_workflow_non_critical_apm_error_rate.name
-  muting_rules_handling = var.newrelic_workflow_non_critical_apm_error_rate.muting_rules_handling
-
-  issues_filter {
-    name = var.newrelic_workflow_non_critical_apm_error_rate.issues_filter.name
-    type = var.newrelic_workflow_non_critical_apm_error_rate.issues_filter.type
-
-    predicate {
-      attribute = var.newrelic_workflow_non_critical_apm_error_rate.predicate.attribute
-      operator  = var.newrelic_workflow_non_critical_apm_error_rate.predicate.operator
-      values    = var.newrelic_workflow_non_critical_apm_error_rate.predicate.values
-    }
-  }
-  destination {
-    channel_id            = var.newrelic_workflow_non_critical_apm_error_rate.destination.channel_id
-    notification_triggers = var.notification_triggers
-  }
-}
-
-# Pagerduty resources
-
-## Synthetic monitors
-
-resource "pagerduty_service" "synthetics_newrelic" {
-  name                    = var.pagerduty_service_synthetics_newrelic.name
-  auto_resolve_timeout    = var.pagerduty_service_synthetics_newrelic.auto_resolve_timeout
-  acknowledgement_timeout = var.pagerduty_service_synthetics_newrelic.acknowledgement_timeout
-  escalation_policy       = var.pagerduty_service_synthetics_newrelic.escalation_policy
-  alert_creation          = var.pagerduty_service_synthetics_newrelic.alert_creation
+resource "pagerduty_service" "this" {
+  for_each                = { for pd_service in var.pagerduty_service : pd_service.name => pd_service }
+  name                    = each.value.name
+  auto_resolve_timeout    = each.value.auto_resolve_timeout
+  acknowledgement_timeout = each.value.acknowledgement_timeout
+  escalation_policy       = each.value.escalation_policy
+  alert_creation          = each.value.alert_creation
 
   incident_urgency_rule {
-    type    = var.pagerduty_service_synthetics_newrelic.incident_urgency_rule.type
-    urgency = var.pagerduty_service_synthetics_newrelic.incident_urgency_rule.urgency
+    type    = each.value.incident_urgency_rule[0].type
+    urgency = each.value.incident_urgency_rule[0].urgency
   }
 }
 
-resource "pagerduty_service_integration" "synthetics_newrelic" {
-  name    = var.pagerduty_service_integration_synthetics_newrelic.name
-  service = var.pagerduty_service_integration_synthetics_newrelic.service
-  vendor  = var.pagerduty_service_integration_synthetics_newrelic.vendor
-}
-
-resource "pagerduty_service" "critical" {
-
-  name                    = var.pagerduty_service_critical.name
-  auto_resolve_timeout    = var.pagerduty_service_critical.auto_resolve_timeout
-  acknowledgement_timeout = var.pagerduty_service_critical.acknowledgement_timeout
-  escalation_policy       = var.pagerduty_service_critical.escalation_policy
-  alert_creation          = var.pagerduty_service_critical.alert_creation
-
-  incident_urgency_rule {
-    type    = var.pagerduty_service_critical.incident_urgency_rule.type
-    urgency = var.pagerduty_service_critical.incident_urgency_rule.urgency
-  }
-}
-
-resource "pagerduty_service" "non_critical" {
-  name                    = var.pagerduty_service_non_critical.name
-  auto_resolve_timeout    = var.pagerduty_service_non_critical.auto_resolve_timeout
-  acknowledgement_timeout = var.pagerduty_service_non_critical.acknowledgement_timeout
-  escalation_policy       = var.pagerduty_service_non_critical.escalation_policy
-  alert_creation          = var.pagerduty_service_non_critical.alert_creation
-
-  incident_urgency_rule {
-    type    = var.pagerduty_service_non_critical.incident_urgency_rule.type
-    urgency = var.pagerduty_service_non_critical.incident_urgency_rule.urgency
-  }
-}
-
-resource "pagerduty_service_integration" "critical" {
-  name    = var.pagerduty_service_integration_critical.name
-  service = var.pagerduty_service_integration_critical.service
-  vendor  = var.pagerduty_service_integration_critical.vendor
-}
-
-resource "pagerduty_service_integration" "non_critical" {
-  name    = var.pagerduty_service_integration_non_critical.name
-  service = var.pagerduty_service_integration_non_critical.service
-  vendor  = var.pagerduty_service_integration_non_critical.vendor
-}
-
-resource "pagerduty_service_integration" "non_critical_events_API_v2" {
-  name    = var.pagerduty_service_integration_non_critical_events_API_v2.name
-  service = var.pagerduty_service_integration_non_critical_events_API_v2.service
-  type    = var.pagerduty_service_integration_non_critical_events_API_v2.type
+resource "pagerduty_service_integration" "this" {
+  for_each = { for pd_integration in var.pagerduty_service_integration : pd_integration.name => pd_integration }
+  name     = var.pagerduty_service_integration[0].name
+  service  = var.pagerduty_service_integration[0].service
+  vendor   = var.pagerduty_service_integration[0].vendor
 }
