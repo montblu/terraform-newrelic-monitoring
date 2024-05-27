@@ -78,7 +78,7 @@ resource "newrelic_workflow" "this" {
 }
 
 resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
-  for_each = var.monitor_name_uri
+  for_each = var.create_critical_resources == true ? var.monitor_name_uri : {}
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${local.nr_entity_prefix}${each.key}-Critical-monitor-health"

@@ -1,4 +1,4 @@
-variable "create_critical_apm" {
+variable "create_critical_resources" {
   description = "Determine if critical apm resources are created"
   type        = bool
 }
