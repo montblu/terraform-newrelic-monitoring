@@ -1,6 +1,6 @@
 resource "newrelic_synthetics_monitor" "all" {
   for_each            = var.monitor_name_uri
-  name                = "${local.nr_entity_prefix}${each.key}-synthetics"
+  name                = "${local.nr_entity_prefix}${each.key}"
   type                = var.monitor_type
   period              = var.monitor_period
   status              = var.monitor_status
