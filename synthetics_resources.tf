@@ -60,18 +60,18 @@ resource "newrelic_workflow" "this" {
   name                  = "Monitor-${local.nr_entity_prefix}${each.key}-health"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
   issues_filter {
-    name = var.newrelic_workflow_synthetics_issues_filter[0].name
-    type = var.newrelic_workflow_synthetics_issues_filter[0].type
+    name = "workflow-filter"
+    type = "FILTER"
 
     predicate {
-      attribute = var.newrelic_workflow_synthetics_issues_filter[0].predicate[0].attribute
-      operator  = var.newrelic_workflow_synthetics_issues_filter[0].predicate[0].operator
+      attribute = "labels.policyIds"
+      operator  = "EXACTLY_MATCHES"
       values    = [newrelic_alert_policy.synthetics[each.key].id]
     }
   }
   destination {
     channel_id            = newrelic_notification_channel.synthetics[each.key].id
-    notification_triggers = var.newrelic_workflow_synthetics_destination[0].notification_triggers
+    notification_triggers = ["ACTIVATED", "CLOSED"]
   }
 }
 
@@ -80,22 +80,22 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${local.nr_entity_prefix}${each.key}-Critical-monitor-health"
-  description = var.newrelic_nrql_alert_condition_critical_synthetics_description
-  enabled     = var.newrelic_nrql_alert_condition_critical_synthetics_enabled
+  description = "critical-alert"
+  enabled     = true
 
   nrql {
     query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${newrelic_synthetics_monitor.all[each.key].id}') FACET monitorName"
   }
   critical {
-    operator              = var.newrelic_nrql_alert_condition_critical_synthetics_critical[0].operator
-    threshold             = var.newrelic_nrql_alert_condition_critical_synthetics_critical[0].threshold
-    threshold_duration    = var.newrelic_nrql_alert_condition_critical_synthetics_critical[0].threshold_duration
-    threshold_occurrences = var.newrelic_nrql_alert_condition_critical_synthetics_critical[0].threshold_occurrences
+    operator              = "above_or_equals"
+    threshold             = 3
+    threshold_duration    = 300
+    threshold_occurrences = "at_least_once"
   }
-  expiration_duration            = var.newrelic_nrql_alert_condition_synthetics_expiration_duration
-  open_violation_on_expiration   = var.newrelic_nrql_alert_condition_synthetics_open_violation_on_expiration
-  close_violations_on_expiration = var.newrelic_nrql_alert_condition_synthetics_close_violations_on_expiration
-  aggregation_window             = var.newrelic_nrql_alert_condition_synthetics_aggregation_window
+  expiration_duration            = 300
+  open_violation_on_expiration   = false
+  close_violations_on_expiration = true
+  aggregation_window             = 300
 }
 
 resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
@@ -103,22 +103,22 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${local.nr_entity_prefix}${each.key}-Non-Critical-monitor-health"
-  description = var.newrelic_nrql_alert_condition_noncritical_synthetics_description
-  enabled     = var.newrelic_nrql_alert_condition_noncritical_synthetics_enabled
+  description = "non-critical-alert"
+  enabled     = true
 
   nrql {
     query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${newrelic_synthetics_monitor.all[each.key].id}') FACET monitorName"
   }
   warning {
-    operator              = var.newrelic_nrql_alert_condition_noncritical_synthetics_noncritical[0].operator
-    threshold             = var.newrelic_nrql_alert_condition_noncritical_synthetics_noncritical[0].threshold
-    threshold_duration    = var.newrelic_nrql_alert_condition_noncritical_synthetics_noncritical[0].threshold_duration
-    threshold_occurrences = var.newrelic_nrql_alert_condition_noncritical_synthetics_noncritical[0].threshold_occurrences
+    operator              = "above_or_equals"
+    threshold             = 1
+    threshold_duration    = 900
+    threshold_occurrences = "at_least_once"
   }
-  expiration_duration            = var.newrelic_nrql_alert_condition_synthetics_expiration_duration
-  open_violation_on_expiration   = var.newrelic_nrql_alert_condition_synthetics_open_violation_on_expiration
-  close_violations_on_expiration = var.newrelic_nrql_alert_condition_synthetics_close_violations_on_expiration
-  aggregation_window             = var.newrelic_nrql_alert_condition_synthetics_aggregation_window
+  expiration_duration            = 300
+  open_violation_on_expiration   = false
+  close_violations_on_expiration = true
+  aggregation_window             = 300
 }
 
 
@@ -126,14 +126,14 @@ resource "pagerduty_service" "synthetics_newrelic" {
   for_each = var.monitor_name_uri
 
   name                    = "NewRelic-${local.nr_entity_prefix}synthetics-${each.key}"
-  auto_resolve_timeout    = var.pagerduty_service_synthetics_auto_resolve_timeout
-  acknowledgement_timeout = var.pagerduty_service_synthetics_acknowledgement_timeout
+  auto_resolve_timeout    = "null"
+  acknowledgement_timeout = 600
   escalation_policy       = data.pagerduty_escalation_policy.ep.id
-  alert_creation          = var.pagerduty_service_synthetics_alert_creation_type
+  alert_creation          = "create_alerts_and_incidents"
 
   incident_urgency_rule {
-    type    = var.pagerduty_service_synthetics_incident_urgency_rule[0].type
-    urgency = var.pagerduty_service_synthetics_incident_urgency_rule[0].urgency
+    type    = "constant"
+    urgency = "high"
   }
 }
 
