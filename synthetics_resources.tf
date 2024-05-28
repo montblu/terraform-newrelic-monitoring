@@ -115,7 +115,7 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
     threshold_duration    = 900
     threshold_occurrences = "at_least_once"
   }
-  expiration_duration            = 300
+  expiration_duration            = 600
   open_violation_on_expiration   = false
   close_violations_on_expiration = true
   aggregation_window             = 300
