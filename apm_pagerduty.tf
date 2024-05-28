@@ -8,7 +8,7 @@ resource "pagerduty_service" "critical" {
   name                    = "${local.nr_entity_prefix}${each.key}-Critical"
   auto_resolve_timeout    = "null"
   acknowledgement_timeout = 600
-  escalation_policy       = data.pagerduty_escalation_policy.slack.id
+  escalation_policy       = data.pagerduty_escalation_policy.ep.id
   alert_creation          = "create_alerts_and_incidents"
 
   incident_urgency_rule {
@@ -39,7 +39,7 @@ resource "pagerduty_service" "non_critical" {
   name                    = "${local.nr_entity_prefix}${each.key}-Non_Critical"
   auto_resolve_timeout    = "null"
   acknowledgement_timeout = 600
-  escalation_policy       = data.pagerduty_escalation_policy.slack.id
+  escalation_policy       = data.pagerduty_escalation_policy.ep.id
   alert_creation          = "create_alerts_and_incidents"
 
   incident_urgency_rule {

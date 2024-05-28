@@ -1,3 +1,9 @@
+variable "create_apm_resources" {
+  description = "If set to false, only synthetic monitor will be created"
+  type    = bool
+  default = true
+}
+
 variable "create_critical_resources" {
   description = "Determine if critical apm resources are created"
   type        = bool

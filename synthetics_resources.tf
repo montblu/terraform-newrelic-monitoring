@@ -62,8 +62,6 @@ resource "newrelic_workflow" "this" {
   issues_filter {
     name = var.newrelic_workflow_synthetics_issues_filter[0].name
     type = var.newrelic_workflow_synthetics_issues_filter[0].type
-    # name and type are required but not really relevant:
-    # https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/workflow#type
 
     predicate {
       attribute = var.newrelic_workflow_synthetics_issues_filter[0].predicate[0].attribute
@@ -130,7 +128,7 @@ resource "pagerduty_service" "synthetics_newrelic" {
   name                    = "NewRelic-${local.nr_entity_prefix}synthetics-${each.key}"
   auto_resolve_timeout    = var.pagerduty_service_synthetics_auto_resolve_timeout
   acknowledgement_timeout = var.pagerduty_service_synthetics_acknowledgement_timeout
-  escalation_policy       = data.pagerduty_escalation_policy.slack.id
+  escalation_policy       = data.pagerduty_escalation_policy.ep.id
   alert_creation          = var.pagerduty_service_synthetics_alert_creation_type
 
   incident_urgency_rule {
