@@ -1,12 +1,12 @@
 resource "newrelic_alert_policy" "critical_apm_response_time" {
-  for_each = var.create_apm_resources == true && var.create_critical_resources == true ? var.monitor_name_uri : {}
+  for_each = var.create_apm_resources == true && var.create_critical_apm_resources == true ? var.monitor_name_uri : {}
 
   name                = "APM-${local.nr_entity_prefix}${each.key}-response-time-Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_alert_policy" "critical_apm_error_rate" {
-  for_each = var.create_apm_resources == true && var.create_critical_resources == true ? var.monitor_name_uri : {}
+  for_each = var.create_apm_resources == true && var.create_critical_apm_resources == true ? var.monitor_name_uri : {}
 
   name                = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
@@ -27,7 +27,7 @@ resource "newrelic_notification_destination" "critical_apm" {
 }
 
 resource "newrelic_notification_channel" "critical_apm_response_time" {
-  for_each = var.create_apm_resources == true && var.create_critical_resources == true ? var.monitor_name_uri : {}
+  for_each = var.create_apm_resources == true && var.create_critical_apm_resources == true ? var.monitor_name_uri : {}
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-response-time-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -49,7 +49,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
 }
 
 resource "newrelic_notification_channel" "critical_apm_error_rate" {
-  for_each = var.create_apm_resources == true && var.create_critical_resources == true ? var.monitor_name_uri : {}
+  for_each = var.create_apm_resources == true && var.create_critical_apm_resources == true ? var.monitor_name_uri : {}
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -71,7 +71,7 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
 }
 
 resource "newrelic_nrql_alert_condition" "critical_response_time" {
-  for_each = var.create_apm_resources == true && var.create_critical_resources == true ? var.monitor_name_uri : {}
+  for_each = var.create_apm_resources == true && var.create_critical_apm_resources == true ? var.monitor_name_uri : {}
 
   policy_id   = newrelic_alert_policy.critical_apm_response_time[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Critical-response-time"
@@ -90,7 +90,7 @@ resource "newrelic_nrql_alert_condition" "critical_response_time" {
 }
 
 resource "newrelic_nrql_alert_condition" "critical_error_rate" {
-  for_each = var.create_apm_resources == true && var.create_critical_resources == true ? var.monitor_name_uri : {}
+  for_each = var.create_apm_resources == true && var.create_critical_apm_resources == true ? var.monitor_name_uri : {}
 
   policy_id   = newrelic_alert_policy.critical_apm_error_rate[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
@@ -109,7 +109,7 @@ resource "newrelic_nrql_alert_condition" "critical_error_rate" {
 }
 
 resource "newrelic_workflow" "critical_apm_response_time" {
-  for_each = var.create_apm_resources == true && var.create_critical_resources == true ? var.monitor_name_uri : {}
+  for_each = var.create_apm_resources == true && var.create_critical_apm_resources == true ? var.monitor_name_uri : {}
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Critical-response-time"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -131,7 +131,7 @@ resource "newrelic_workflow" "critical_apm_response_time" {
 }
 
 resource "newrelic_workflow" "critical_apm_error_rate" {
-  for_each = var.create_apm_resources == true && var.create_critical_resources == true ? var.monitor_name_uri : {}
+  for_each = var.create_apm_resources == true && var.create_critical_apm_resources == true ? var.monitor_name_uri : {}
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"

@@ -4,7 +4,7 @@ variable "create_apm_resources" {
   default     = true
 }
 
-variable "create_critical_resources" {
+variable "create_critical_apm_resources" {
   description = "Determine if critical apm resources are created"
   type        = bool
 }
