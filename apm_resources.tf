@@ -12,7 +12,6 @@ resource "newrelic_alert_policy" "critical_apm_error_rate" {
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
-# Notification Destination
 resource "newrelic_notification_destination" "critical_apm" {
   name = "${pagerduty_service.critical["NewRelic"].name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -37,7 +36,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
 
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.critical_response_time[each.key].description} > ${var.newrelic_nrql_alert_condition_critical_response_time_critical[0].threshold} seconds"
+    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.critical_response_time[each.key].description} > ${newrelic_nrql_alert_condition.critical_response_time[each.key].critical.threshold} seconds"
   }
   property {
     key   = "policy_id"
@@ -59,7 +58,7 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
 
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.critical_error_rate[each.key].description} > ${var.critical_error_threshold}%"
+    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.critical_error_rate[each.key].description} > ${newrelic_nrql_alert_condition.critical_error_rate[each.key].critical.threshold}%"
   }
   property {
     key   = "policy_id"
@@ -71,23 +70,22 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
   }
 }
 
-# Alert Conditions
 resource "newrelic_nrql_alert_condition" "critical_response_time" {
   for_each = var.create_apm_resources == true && var.create_critical_resources == true ? var.monitor_name_uri : {}
 
   policy_id   = newrelic_alert_policy.critical_apm_response_time[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Critical-response-time"
-  description = var.newrelic_nrql_alert_condition_critical_response_time_description
-  enabled     = var.newrelic_nrql_alert_condition_critical_response_time_enabled
+  description = "response-time"
+  enabled     = true
 
   nrql {
     query = "SELECT average(duration) FROM Transaction where appName = '${data.newrelic_entity.this[each.key].name}'"
   }
   critical {
-    operator              = var.newrelic_nrql_alert_condition_critical_response_time_critical[0].operator
-    threshold             = var.newrelic_nrql_alert_condition_critical_response_time_critical[0].threshold
-    threshold_duration    = var.newrelic_nrql_alert_condition_critical_response_time_critical[0].threshold_duration
-    threshold_occurrences = var.newrelic_nrql_alert_condition_critical_response_time_critical[0].threshold_occurrences
+    operator              = "above_or_equals"
+    threshold             = 0.7
+    threshold_duration    = 300
+    threshold_occurrences = "at_least_once"
   }
 }
 
@@ -96,21 +94,20 @@ resource "newrelic_nrql_alert_condition" "critical_error_rate" {
 
   policy_id   = newrelic_alert_policy.critical_apm_error_rate[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
-  description = var.newrelic_nrql_alert_condition_critical_error_rate_description
-  enabled     = var.newrelic_nrql_alert_condition_critical_error_rate_enabled
+  description = "error-rate"
+  enabled     = true
 
   nrql {
     query = "SELECT sum(apm.service.error.count['count']) / count(apm.service.transaction.duration) AS 'All errors' FROM Metric WHERE (appName = '${data.newrelic_entity.this[each.key].name}')"
   }
   critical {
-    operator              = var.newrelic_nrql_alert_condition_critical_error_rate_critical[0].operator
-    threshold             = var.newrelic_nrql_alert_condition_critical_error_rate_critical[0].threshold
-    threshold_duration    = var.newrelic_nrql_alert_condition_critical_error_rate_critical[0].threshold_duration
-    threshold_occurrences = var.newrelic_nrql_alert_condition_critical_error_rate_critical[0].threshold_occurrences
+    operator              = "above_or_equals"
+    threshold             = 15
+    threshold_duration    = 300
+    threshold_occurrences = "at_least_once"
   }
 }
 
-# Workflows
 resource "newrelic_workflow" "critical_apm_response_time" {
   for_each = var.create_apm_resources == true && var.create_critical_resources == true ? var.monitor_name_uri : {}
 
@@ -118,18 +115,18 @@ resource "newrelic_workflow" "critical_apm_response_time" {
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
 
   issues_filter {
-    name = var.newrelic_workflow_critical_apm_response_time_issues_filter[0].name
-    type = var.newrelic_workflow_critical_apm_response_time_issues_filter[0].type
+    name = "workflow-filter"
+    type = "FILTER"
 
     predicate {
-      attribute = var.newrelic_workflow_critical_apm_response_time_issues_filter[0].predicate[0].attribute
-      operator  = var.newrelic_workflow_critical_apm_response_time_issues_filter[0].predicate[0].operator
+      attribute = "labels.policyIds"
+      operator  = "EXACTLY_MATCHES"
       values    = [newrelic_alert_policy.critical_apm_response_time[each.key].id]
     }
   }
   destination {
     channel_id            = newrelic_notification_channel.critical_apm_response_time[each.key].id
-    notification_triggers = var.newrelic_workflow_critical_apm_response_time_destination[0].notification_triggers
+    notification_triggers = ["ACTIVATED", "CLOSED"]
   }
 }
 
@@ -140,24 +137,21 @@ resource "newrelic_workflow" "critical_apm_error_rate" {
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
 
   issues_filter {
-    name = var.newrelic_workflow_critical_apm_error_rate_issues_filter[0].name
-    type = var.newrelic_workflow_critical_apm_error_rate_issues_filter[0].type
+    name = "workflow-filter"
+    type = "FILTER"
 
     predicate {
-      attribute = var.newrelic_workflow_critical_apm_error_rate_issues_filter[0].predicate[0].attribute
-      operator  = var.newrelic_workflow_critical_apm_error_rate_issues_filter[0].predicate[0].operator
+      attribute = "labels.policyIds"
+      operator  = "EXACTLY_MATCHES"
       values    = [newrelic_alert_policy.critical_apm_error_rate[each.key].id]
     }
   }
   destination {
     channel_id            = newrelic_notification_channel.critical_apm_error_rate[each.key].id
-    notification_triggers = var.newrelic_workflow_critical_apm_error_rate_destination[0].notification_triggers
+    notification_triggers = ["ACTIVATED", "CLOSED"]
   }
 }
 
-## NON-CRITICAL
-
-# Notification Destination
 resource "newrelic_notification_destination" "non_critical_apm" {
   name = "${pagerduty_service.non_critical["NewRelic"].name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -172,7 +166,6 @@ resource "newrelic_notification_destination" "non_critical_apm" {
   }
 }
 
-# Policies
 resource "newrelic_alert_policy" "non_critical_apm_response_time" {
   for_each = var.create_apm_resources == true ? var.monitor_name_uri : {}
 
@@ -186,7 +179,6 @@ resource "newrelic_alert_policy" "non_critical_apm_error_rate" {
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
-# Notification Channels
 resource "newrelic_notification_channel" "non_critical_apm_response_time" {
   for_each = var.create_apm_resources == true ? var.monitor_name_uri : {}
 
@@ -197,7 +189,7 @@ resource "newrelic_notification_channel" "non_critical_apm_response_time" {
 
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].description} > ${var.newrelic_nrql_alert_condition_non_critical_response_time_warning[0].threshold} seconds"
+    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].warning.threshold} seconds"
   }
 
   property {
@@ -219,7 +211,7 @@ resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
   product        = "IINT"
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].description} > ${var.newrelic_nrql_alert_condition_non_critical_error_rate_warning[0].threshold}%"
+    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].warning.threshold}%"
   }
   property {
     key   = "policy_id"
@@ -231,7 +223,6 @@ resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
   }
 }
 
-# # Alert Conditions
 resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
   for_each = var.create_apm_resources == true ? var.monitor_name_uri : {}
 
@@ -244,10 +235,10 @@ resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
     query = "SELECT average(duration) FROM Transaction where appName = '${data.newrelic_entity.this[each.key].name}'"
   }
   warning {
-    operator              = var.newrelic_nrql_alert_condition_non_critical_response_time_warning[0].operator
-    threshold             = var.newrelic_nrql_alert_condition_non_critical_response_time_warning[0].threshold
-    threshold_duration    = var.newrelic_nrql_alert_condition_non_critical_response_time_warning[0].threshold_duration
-    threshold_occurrences = var.newrelic_nrql_alert_condition_non_critical_response_time_warning[0].threshold_occurrences
+    operator              = "above_or_equals"
+    threshold             = 0.5
+    threshold_duration    = 900
+    threshold_occurrences = "at_least_once"
   }
 }
 
@@ -256,21 +247,20 @@ resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
 
   policy_id   = newrelic_alert_policy.non_critical_apm_error_rate[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Non_Critical-error-rate"
-  description = var.newrelic_nrql_alert_condition_non_critical_error_rate_description
-  enabled     = var.newrelic_nrql_alert_condition_non_critical_error_rate_enabled
+  description = "error-rate"
+  enabled     = true
 
   nrql {
     query = "SELECT sum(apm.service.error.count['count']) / count(apm.service.transaction.duration) AS 'All errors' FROM Metric WHERE (appName = '${data.newrelic_entity.this[each.key].name}')"
   }
   warning {
     operator              = "above_or_equals"
-    threshold             = var.newrelic_nrql_alert_condition_non_critical_error_rate_warning[0].threshold
-    threshold_duration    = var.newrelic_nrql_alert_condition_non_critical_error_rate_warning[0].threshold_duration
-    threshold_occurrences = var.newrelic_nrql_alert_condition_non_critical_error_rate_warning[0].threshold_occurrences
+    threshold             = 7
+    threshold_duration    = 900
+    threshold_occurrences = "at_least_once"
   }
 }
 
-# Workflows
 resource "newrelic_workflow" "non_critical_apm_response_time" {
   for_each = var.create_apm_resources == true ? var.monitor_name_uri : {}
 

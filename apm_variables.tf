@@ -1,7 +1,7 @@
 variable "create_apm_resources" {
   description = "If set to false, only synthetic monitor will be created"
-  type    = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "create_critical_resources" {
@@ -9,163 +9,64 @@ variable "create_critical_resources" {
   type        = bool
 }
 
-variable "newrelic_nrql_alert_condition_critical_response_time_description" {
+variable "pagerduty_escalation_policy" {
   type    = string
-  default = "response-time"
+  default = "Default"
 }
 
-variable "newrelic_nrql_alert_condition_critical_response_time_enabled" {
-  type    = bool
-  default = true
-}
-
-variable "newrelic_nrql_alert_condition_critical_response_time_critical" {
-  type = list(object({
-    operator              = string
-    threshold             = number
-    threshold_duration    = number
-    threshold_occurrences = string
-  }))
-  default = [{
-    operator              = "above_or_equals"
-    threshold             = 0.7
-    threshold_duration    = 300
-    threshold_occurrences = "at_least_once"
-  }]
-}
-
-variable "critical_error_threshold" {
-  type    = number
-  default = 15
-}
-
-variable "newrelic_nrql_alert_condition_critical_error_rate_description" {
+variable "newrelic_resource_name_prefix" {
   type    = string
-  default = "error-rate"
+  default = ""
 }
 
-variable "newrelic_nrql_alert_condition_critical_error_rate_enabled" {
-  type    = bool
-  default = true
+variable "newrelic_resource_name_suffix" {
+  type    = string
+  default = ""
 }
 
-variable "newrelic_nrql_alert_condition_critical_error_rate_critical" {
-  type = list(object({
-    operator              = string
-    threshold             = number
-    threshold_duration    = number
-    threshold_occurrences = string
-  }))
-  default = [{
-    operator              = "above_or_equals"
-    threshold             = 15
-    threshold_duration    = 300
-    threshold_occurrences = "at_least_once"
-  }]
+variable "newrelic_entity_domain" {
+  description = "NewRelic domain"
+  type        = string
+  default     = "APM"
 }
 
-variable "newrelic_workflow_critical_apm_response_time_issues_filter" {
-  type = list(object({
+variable "newrelic_entity_type" {
+  description = "NewRelic type"
+  type        = string
+  default     = "APPLICATION"
+}
+
+variable "monitor_name_uri" {
+  type = map(object({
     name = string
-    type = string
-    predicate = list(object({
-      attribute = string
-      operator  = string
-      values    = any
-    }))
+    uri  = string
   }))
-  default = [{
-    name = "workflow-filter"
-    type = "FILTER"
-    predicate = [{
-      attribute = "labels.policyIds"
-      operator  = "EXACTLY_MATCHES"
-      values    = ""
-    }]
-  }]
 }
-
-variable "newrelic_workflow_critical_apm_response_time_destination" {
-  type = list(object({
-    channel_id            = any
-    notification_triggers = list(string)
-  }))
-  default = [{
-    channel_id            = ""
-    notification_triggers = ["ACTIVATED", "CLOSED"]
-  }]
-}
-
-
-
-variable "newrelic_workflow_critical_apm_error_rate_issues_filter" {
-  type = list(object({
-    name = string
-    type = string
-    predicate = list(object({
-      attribute = string
-      operator  = string
-      values    = any
-    }))
-  }))
-  default = [{
-    name = "workflow-filter"
-    type = "FILTER"
-    predicate = [{
-      attribute = "labels.policyIds"
-      operator  = "EXACTLY_MATCHES"
-      values    = ""
-    }]
-  }]
-}
-
-variable "newrelic_workflow_critical_apm_error_rate_destination" {
-  type = list(object({
-    channel_id            = any
-    notification_triggers = list(string)
-  }))
-  default = [{
-    channel_id            = ""
-    notification_triggers = ["ACTIVATED", "CLOSED"]
-  }]
-}
-
-variable "newrelic_nrql_alert_condition_non_critical_response_time_warning" {
-  type = list(object({
-    operator              = string
-    threshold             = number
-    threshold_duration    = number
-    threshold_occurrences = string
-  }))
-  default = [{
-    operator              = "above_or_equals"
-    threshold             = 0.5
-    threshold_duration    = 900
-    threshold_occurrences = "at_least_once"
-  }]
-}
-
-variable "newrelic_nrql_alert_condition_non_critical_error_rate_description" {
+variable "monitor_type" {
   type    = string
-  default = "error-rate"
+  default = "SIMPLE"
 }
-
-variable "newrelic_nrql_alert_condition_non_critical_error_rate_enabled" {
+variable "monitor_period" {
+  type    = string
+  default = "EVERY_5_MINUTES"
+}
+variable "monitor_status" {
+  type    = string
+  default = "ENABLED"
+}
+variable "monitor_locations_public" {
+  type    = list(string)
+  default = ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"]
+}
+variable "monitor_validation_string" {
+  type    = string
+  default = ""
+}
+variable "monitor_verify_ssl" {
   type    = bool
   default = true
 }
-
-variable "newrelic_nrql_alert_condition_non_critical_error_rate_warning" {
-  type = list(object({
-    operator              = string
-    threshold             = number
-    threshold_duration    = number
-    threshold_occurrences = string
-  }))
-  default = [{
-    operator              = "above_or_equals"
-    threshold             = 7
-    threshold_duration    = 900
-    threshold_occurrences = "at_least_once"
-  }]
+variable "monitor_bypass_head_request" {
+  type    = bool
+  default = false
 }
