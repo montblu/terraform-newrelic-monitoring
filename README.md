@@ -1,4 +1,4 @@
-# terraform-NewRelic-PagerDuty
+# terraform-newrelic-monitoring
 Terraform module to create communication between NewRelic and PagerDuty
 
 <!-- BEGIN_TF_DOCS -->
