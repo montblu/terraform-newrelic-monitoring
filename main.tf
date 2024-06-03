@@ -215,7 +215,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
 
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.critical_response_time[each.key].description} > ${newrelic_nrql_alert_condition.critical_response_time[each.key].critical[0].threshold} seconds"
+    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.critical_response_time[each.key].description} > ${newrelic_nrql_alert_condition.critical_response_time[each.key].critical.threshold} seconds"
   }
   property {
     key   = "policy_id"
@@ -237,7 +237,7 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
 
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.critical_error_rate[each.key].description} > ${newrelic_nrql_alert_condition.critical_error_rate[each.key].critical[0].threshold}%"
+    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.critical_error_rate[each.key].description} > ${newrelic_nrql_alert_condition.critical_error_rate[each.key].critical.threshold}%"
   }
   property {
     key   = "policy_id"
@@ -368,7 +368,7 @@ resource "newrelic_notification_channel" "non_critical_apm_response_time" {
 
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].warning[0].threshold} seconds"
+    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].warning.threshold} seconds"
   }
 
   property {
@@ -390,7 +390,7 @@ resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
   product        = "IINT"
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].warning[0].threshold}%"
+    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].warning.threshold}%"
   }
   property {
     key   = "policy_id"
