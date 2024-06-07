@@ -262,7 +262,7 @@ resource "newrelic_nrql_alert_condition" "critical_response_time" {
   }
   critical {
     operator              = "above_or_equals"
-    threshold             = 0.7
+    threshold             = 1
     threshold_duration    = 300
     threshold_occurrences = "at_least_once"
   }
@@ -415,7 +415,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
   }
   warning {
     operator              = "above_or_equals"
-    threshold             = 0.5
+    threshold             = 0.7
     threshold_duration    = 900
     threshold_occurrences = "at_least_once"
   }
