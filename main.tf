@@ -33,14 +33,14 @@ data "pagerduty_escalation_policy" "ep" {
 resource "newrelic_synthetics_monitor" "all" {
   for_each            = var.monitor_name_uri
   name                = "${local.nr_entity_prefix}${each.key}"
-  type                = var.monitor_type
-  period              = var.monitor_period
-  status              = var.monitor_status
-  locations_public    = var.monitor_locations_public
+  type                = each.value["type"]
+  period              = each.value["period"]
+  status              = each.value["status"]
+  locations_public    = each.value["locations_public"]
   uri                 = each.value["uri"]
-  validation_string   = var.monitor_validation_string
-  verify_ssl          = var.monitor_verify_ssl
-  bypass_head_request = var.monitor_bypass_head_request
+  validation_string   = each.value["validation_string"]
+  verify_ssl          = each.value["verify_ssl"]
+  bypass_head_request = each.value["bypass_head_request"]
 }
 
 resource "newrelic_alert_policy" "synthetics" {
@@ -262,7 +262,7 @@ resource "newrelic_nrql_alert_condition" "critical_response_time" {
   }
   critical {
     operator              = "above_or_equals"
-    threshold             = 1
+    threshold             = each.value["critical_response_time"]
     threshold_duration    = 300
     threshold_occurrences = "at_least_once"
   }
@@ -281,7 +281,7 @@ resource "newrelic_nrql_alert_condition" "critical_error_rate" {
   }
   critical {
     operator              = "above_or_equals"
-    threshold             = 15
+    threshold             = each.value["critical_error_rate"]
     threshold_duration    = 300
     threshold_occurrences = "at_least_once"
   }
@@ -415,7 +415,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
   }
   warning {
     operator              = "above_or_equals"
-    threshold             = 0.7
+    threshold             = each.value["non_critical_response_time"]
     threshold_duration    = 900
     threshold_occurrences = "at_least_once"
   }
@@ -434,7 +434,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
   }
   warning {
     operator              = "above_or_equals"
-    threshold             = 7
+    threshold             = each.value["non_critical_error_rate"]
     threshold_duration    = 900
     threshold_occurrences = "at_least_once"
   }
