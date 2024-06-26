@@ -38,35 +38,18 @@ variable "newrelic_entity_type" {
 
 variable "monitor_name_uri" {
   type = map(object({
-    name = string
-    uri  = string
+    name                       = string
+    uri                        = string
+    type                       = optional(string, "SIMPLE")
+    period                     = optional(string, "EVERY_5_MINUTES")
+    status                     = optional(string, "ENABLED")
+    locations_public           = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
+    validation_string          = optional(string, "")
+    verify_ssl                 = optional(bool, true)
+    bypass_head_request        = optional(bool, false)
+    critical_response_time     = optional(number, 0.7)
+    non_critical_response_time = optional(number, 0.5)
+    critical_error_rate        = optional(number, 15)
+    non_critical_error_rate    = optional(number, 7)
   }))
-}
-variable "monitor_type" {
-  type    = string
-  default = "SIMPLE"
-}
-variable "monitor_period" {
-  type    = string
-  default = "EVERY_5_MINUTES"
-}
-variable "monitor_status" {
-  type    = string
-  default = "ENABLED"
-}
-variable "monitor_locations_public" {
-  type    = list(string)
-  default = ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"]
-}
-variable "monitor_validation_string" {
-  type    = string
-  default = ""
-}
-variable "monitor_verify_ssl" {
-  type    = bool
-  default = true
-}
-variable "monitor_bypass_head_request" {
-  type    = bool
-  default = false
 }
