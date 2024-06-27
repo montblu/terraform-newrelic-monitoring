@@ -15,7 +15,7 @@ locals {
 }
 
 data "newrelic_entity" "this" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources == true || value.create_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources || value.create_critical_apm_resources }
 
   name   = "${local.nr_entity_prefix}${each.key}${local.nr_entity_suffix}"
   domain = var.newrelic_entity_domain
@@ -37,7 +37,7 @@ data "pagerduty_escalation_policy" "ep" {
 ##########################
 
 resource "newrelic_synthetics_monitor" "all" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor == true || value.create_critical_monitor == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
 
   name                = "${local.nr_entity_prefix}${each.key}"
   type                = each.value["type"]
@@ -58,14 +58,14 @@ resource "newrelic_synthetics_monitor" "all" {
 }
 
 resource "newrelic_alert_policy" "synthetics" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor == true || value.create_critical_monitor == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
 
   name                = "${local.nr_entity_prefix}${each.key}-synthetics"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_notification_destination" "synthetics" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor == true || value.create_critical_monitor == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
 
   name = "${pagerduty_service.synthetics_newrelic[each.key].name}-synthetics"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -81,7 +81,7 @@ resource "newrelic_notification_destination" "synthetics" {
 }
 
 resource "newrelic_notification_channel" "synthetics" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor == true || value.create_critical_monitor == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
 
   name           = "${local.nr_entity_prefix}${each.key}"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -103,7 +103,7 @@ resource "newrelic_notification_channel" "synthetics" {
 }
 
 resource "newrelic_workflow" "this" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor == true || value.create_critical_monitor == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
 
   name                  = "Monitor-${local.nr_entity_prefix}${each.key}-health"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -130,7 +130,7 @@ resource "newrelic_workflow" "this" {
 ##########################
 
 resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_monitor == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_monitor }
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${local.nr_entity_prefix}${each.key}-Critical-monitor-health"
@@ -159,7 +159,7 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
 ##########################
 
 resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor }
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${local.nr_entity_prefix}${each.key}-Non-Critical-monitor-health"
@@ -188,7 +188,7 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
 ##########################
 
 resource "pagerduty_service" "synthetics_newrelic" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor == true || value.create_critical_monitor == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
 
   name                    = "NewRelic-${local.nr_entity_prefix}synthetics-${each.key}"
   auto_resolve_timeout    = "null"
@@ -203,7 +203,7 @@ resource "pagerduty_service" "synthetics_newrelic" {
 }
 
 resource "pagerduty_service_integration" "synthetics_newrelic" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor == true || value.create_critical_monitor == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
 
   name    = data.pagerduty_vendor.vendor["New Relic"].name
   service = pagerduty_service.synthetics_newrelic[each.key].id
@@ -217,14 +217,14 @@ resource "pagerduty_service_integration" "synthetics_newrelic" {
 ##########################
 
 resource "newrelic_alert_policy" "critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
 
   name                = "APM-${local.nr_entity_prefix}${each.key}-response-time-Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_alert_policy" "critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
 
   name                = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
@@ -245,7 +245,7 @@ resource "newrelic_notification_destination" "critical_apm" {
 }
 
 resource "newrelic_notification_channel" "critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-response-time-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -267,7 +267,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
 }
 
 resource "newrelic_notification_channel" "critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -289,7 +289,7 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
 }
 
 resource "newrelic_nrql_alert_condition" "critical_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.critical_apm_response_time[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Critical-response-time"
@@ -308,7 +308,7 @@ resource "newrelic_nrql_alert_condition" "critical_response_time" {
 }
 
 resource "newrelic_nrql_alert_condition" "critical_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.critical_apm_error_rate[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
@@ -327,7 +327,7 @@ resource "newrelic_nrql_alert_condition" "critical_error_rate" {
 }
 
 resource "newrelic_workflow" "critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Critical-response-time"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -349,7 +349,7 @@ resource "newrelic_workflow" "critical_apm_response_time" {
 }
 
 resource "newrelic_workflow" "critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -392,21 +392,21 @@ resource "newrelic_notification_destination" "non_critical_apm" {
 }
 
 resource "newrelic_alert_policy" "non_critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
 
   name                = "APM-${local.nr_entity_prefix}${each.key}-response-time-Non_Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_alert_policy" "non_critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
 
   name                = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Non_Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_notification_channel" "non_critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-response-time-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -429,7 +429,7 @@ resource "newrelic_notification_channel" "non_critical_apm_response_time" {
 }
 
 resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -450,7 +450,7 @@ resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
 }
 
 resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.non_critical_apm_response_time[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Non_Critical-response-time"
@@ -469,7 +469,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
 }
 
 resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.non_critical_apm_error_rate[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Non_Critical-error-rate"
@@ -488,7 +488,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
 }
 
 resource "newrelic_workflow" "non_critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Non_Critical-response-time"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -510,7 +510,7 @@ resource "newrelic_workflow" "non_critical_apm_response_time" {
 }
 
 resource "newrelic_workflow" "non_critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources == true }
+  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Non_Critical-error-rate"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
