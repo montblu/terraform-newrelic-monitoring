@@ -37,6 +37,8 @@ variable "monitor_name_uri" {
     verify_ssl                        = optional(bool, true)
     bypass_head_request               = optional(bool, false)
     custom_header                     = optional(list(map(string)))
+    critical_synthetics_threshold     = optional(number, 3)
+    non_critical_synthetics_threshold = optional(number, 1)
     critical_response_time            = optional(number, 0.7)
     non_critical_response_time        = optional(number, 0.5)
     critical_error_rate               = optional(number, 15)

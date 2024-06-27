@@ -142,7 +142,7 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
   }
   critical {
     operator              = "above_or_equals"
-    threshold             = 3
+    threshold             = each.value["critical_synthetics_threshold"]
     threshold_duration    = 300
     threshold_occurrences = "at_least_once"
   }
@@ -171,7 +171,7 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
   }
   warning {
     operator              = "above_or_equals"
-    threshold             = 1
+    threshold             = each.value["non_critical_synthetics_threshold"]
     threshold_duration    = 900
     threshold_occurrences = "at_least_once"
   }
