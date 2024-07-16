@@ -198,7 +198,7 @@ resource "pagerduty_service" "synthetics_newrelic" {
 
   incident_urgency_rule {
     type    = "constant"
-    urgency = value.create_critical_monitor ? "high" : "low"
+    urgency = each.value.create_critical_monitor ? "high" : "low"
   }
 }
 
