@@ -316,7 +316,7 @@ resource "newrelic_nrql_alert_condition" "critical_error_rate" {
   enabled     = true
 
   nrql {
-    query = "SELECT sum(apm.service.error.count['count']) / count(apm.service.transaction.duration) AS 'All errors' FROM Metric WHERE (appName = '${data.newrelic_entity.this[each.key].name}')"
+    query = "SELECT (sum(apm.service.error.count['count']) / count(apm.service.transaction.duration)) * 100 AS 'All errors' FROM Metric WHERE (appName = '${data.newrelic_entity.this[each.key].name}')"
   }
   critical {
     operator              = "above_or_equals"
@@ -477,7 +477,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
   enabled     = true
 
   nrql {
-    query = "SELECT sum(apm.service.error.count['count']) / count(apm.service.transaction.duration) AS 'All errors' FROM Metric WHERE (appName = '${data.newrelic_entity.this[each.key].name}')"
+    query = "SELECT (sum(apm.service.error.count['count']) / count(apm.service.transaction.duration)) * 100 AS 'All errors' FROM Metric WHERE (appName = '${data.newrelic_entity.this[each.key].name}')"
   }
   warning {
     operator              = "above_or_equals"
