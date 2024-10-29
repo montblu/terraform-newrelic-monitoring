@@ -1,0 +1,7 @@
+name: Generate Tfdocs
+on:
+  - pull_request
+
+jobs:
+  generate-tfdocs:
+    uses: montblu/github-actions/.github/workflows/tfdocs.yaml@main
