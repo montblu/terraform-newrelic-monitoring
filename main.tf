@@ -258,15 +258,15 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
     null}') FACET monitorName"
   }
   critical {
-    operator              = "above_or_equals"
+    operator              = each.value["critical_synthetics_operator"]
     threshold             = each.value["critical_synthetics_threshold"]
-    threshold_duration    = 300
-    threshold_occurrences = "at_least_once"
+    threshold_duration    = each.value["critical_synthetics_threshold_duration"]
+    threshold_occurrences = each.value["critical_synthetics_threshold_occurrences"]
   }
-  expiration_duration            = 300
+  expiration_duration            = each.value["critical_synthetics_expiration_duration"]
   open_violation_on_expiration   = false
   close_violations_on_expiration = true
-  aggregation_window             = 300
+  aggregation_window             = each.value["critical_synthetics_aggregation_window"]
 }
 
 ##########################
@@ -295,15 +295,15 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
   }
 
   warning {
-    operator              = "above_or_equals"
+    operator              = each.value["non_critical_synthetics_operator"]
     threshold             = each.value["non_critical_synthetics_threshold"]
-    threshold_duration    = 900
-    threshold_occurrences = "at_least_once"
+    threshold_duration    = each.value["non_critical_synthetics_threshold_duration"]
+    threshold_occurrences = each.value["non_critical_synthetics_threshold_occurrences"]
   }
-  expiration_duration            = 600
+  expiration_duration            = each.value["non_critical_synthetics_expiration_duration"]
   open_violation_on_expiration   = false
   close_violations_on_expiration = true
-  aggregation_window             = 300
+  aggregation_window             = each.value["non_critical_synthetics_aggregation_window"]
 }
 
 ##########################
