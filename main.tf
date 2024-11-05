@@ -12,14 +12,29 @@ locals {
     "New Relic",
     "Prometheus"
   ]
+  simple_monitors       = { for key, value in var.simple_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  browser_monitors      = { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  script_monitors       = { for key, value in var.script_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  step_monitors         = { for key, value in var.step_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  broken_links_monitors = { for key, value in var.broken_links_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  cert_check_monitors   = { for key, value in var.cert_check_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor || value.create_critical_monitor }
+
+  merged_monitors     = merge(local.simple_monitors, local.browser_monitors, local.script_monitors, local.step_monitors, local.broken_links_monitors, local.cert_check_monitors)
+  merged_monitor_vars = merge(var.simple_monitors, var.browser_monitors, var.script_monitors, var.step_monitors, var.broken_links_monitors, var.cert_check_monitors)
+
+  non_critical_synthetic_monitors = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor }
+  critical_synthetic_monitors     = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_monitor }
+
+  non_critical_apm_resources = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_apm_resources }
+  critical_apm_resources     = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_apm_resources }
 }
 
-data "newrelic_entity" "this" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources || value.create_critical_apm_resources }
 
-  name   = "${local.nr_entity_prefix}${each.key}${local.nr_entity_suffix}"
-  domain = var.newrelic_entity_domain
-  type   = var.newrelic_entity_type
+data "newrelic_entity" "this" {
+  for_each = merge(local.non_critical_apm_resources, local.critical_apm_resources)
+
+  name = each.key
+  type = var.newrelic_entity_type
 }
 data "pagerduty_vendor" "vendor" {
   for_each = toset(local.pagerduty_vendors)
@@ -36,10 +51,11 @@ data "pagerduty_escalation_policy" "ep" {
 
 ##########################
 
+# Ping Monitor
 resource "newrelic_synthetics_monitor" "all" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  for_each = local.simple_monitors
 
-  name                = "${local.nr_entity_prefix}${each.key}"
+  name                = each.key
   type                = each.value["type"]
   period              = each.value["period"]
   status              = each.value["status"]
@@ -57,15 +73,109 @@ resource "newrelic_synthetics_monitor" "all" {
   }
 }
 
-resource "newrelic_alert_policy" "synthetics" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
+# Browser Monitor
+resource "newrelic_synthetics_monitor" "browser" {
+  for_each = local.browser_monitors
 
-  name                = "${local.nr_entity_prefix}${each.key}-synthetics"
+  name                 = each.key
+  type                 = each.value["type"]
+  period               = each.value["period"]
+  status               = each.value["status"]
+  locations_public     = each.value["locations_public"]
+  uri                  = each.value["uri"]
+  validation_string    = each.value["validation_string"]
+  runtime_type         = each.value["runtime_type"]
+  runtime_type_version = each.value["runtime_type_version"]
+  script_language      = each.value["script_language"]
+  devices              = each.value["devices"]
+  browsers             = each.value["browsers"]
+  dynamic "custom_header" {
+    for_each = each.value["custom_header"] != null ? each.value["custom_header"] : []
+    content {
+      name  = custom_header.value["name"]
+      value = custom_header.value["value"]
+    }
+  }
+}
+
+# Script Monitor
+resource "newrelic_synthetics_script_monitor" "script" {
+  for_each = local.script_monitors
+
+  name                                    = each.key
+  type                                    = each.value["type"]
+  period                                  = each.value["period"]
+  status                                  = each.value["status"]
+  locations_public                        = each.value["locations_public"]
+  runtime_type                            = each.value["runtime_type"]
+  runtime_type_version                    = each.value["runtime_type_version"]
+  script_language                         = each.value["script_language"]
+  script                                  = each.value["script"]
+  enable_screenshot_on_failure_and_script = lookup(each.value, "enable_screenshot_on_failure_and_script")
+  devices                                 = lookup(each.value, "devices")
+  browsers                                = lookup(each.value, "browsers")
+}
+
+# Step Monitors
+resource "newrelic_synthetics_step_monitor" "step" {
+  for_each = local.step_monitors
+
+  name                                    = each.key
+  enable_screenshot_on_failure_and_script = each.value["enable_screenshot_on_failure_and_script"]
+  locations_public                        = each.value["locations_public"]
+  period                                  = each.value["period"]
+  status                                  = each.value["status"]
+  runtime_type                            = each.value["runtime_type"]
+  runtime_type_version                    = each.value["runtime_type_version"]
+  devices                                 = each.value["devices"]
+  browsers                                = each.value["browsers"]
+  dynamic "steps" {
+    for_each = each.value["steps"]
+    content {
+      ordinal = steps.value["ordinal"]
+      type    = steps.value["type"]
+      values  = steps.value["values"]
+    }
+  }
+}
+
+# Broken links monitors
+resource "newrelic_synthetics_broken_links_monitor" "broken_links" {
+  for_each = local.broken_links_monitors
+
+  name                 = each.key
+  uri                  = each.value["uri"]
+  locations_public     = each.value["locations_public"]
+  period               = each.value["period"]
+  status               = each.value["status"]
+  runtime_type         = each.value["runtime_type"]
+  runtime_type_version = each.value["runtime_type_version"]
+}
+
+# Certificate check monitors
+resource "newrelic_synthetics_cert_check_monitor" "cert_check" {
+  for_each = local.cert_check_monitors
+
+  name                   = each.key
+  domain                 = each.value["domain"]
+  locations_public       = each.value["locations_public"]
+  certificate_expiration = each.value["certificate_expiration"]
+  period                 = each.value["period"]
+  status                 = each.value["status"]
+  runtime_type           = each.value["runtime_type"]
+  runtime_type_version   = each.value["runtime_type_version"]
+}
+
+##########
+resource "newrelic_alert_policy" "synthetics" {
+  for_each = local.merged_monitors
+
+  name                = "${each.key}-synthetics"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_notification_destination" "synthetics" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  for_each = local.merged_monitors
 
   name = "${pagerduty_service.synthetics_newrelic[each.key].name}-synthetics"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -81,16 +191,16 @@ resource "newrelic_notification_destination" "synthetics" {
 }
 
 resource "newrelic_notification_channel" "synthetics" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  for_each = local.merged_monitors
 
-  name           = "${local.nr_entity_prefix}${each.key}"
+  name           = each.key
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
   destination_id = newrelic_notification_destination.synthetics[each.key].id
   product        = "IINT"
 
   property {
     key   = "summary"
-    value = "Monitor endpoints ${newrelic_synthetics_monitor.all[each.key].name} failling in 1-3 locations"
+    value = "Monitor endpoints ${lookup(each.value, "name", each.key)} failling in 1-3 locations"
   }
   property {
     key   = "policy_id"
@@ -103,9 +213,9 @@ resource "newrelic_notification_channel" "synthetics" {
 }
 
 resource "newrelic_workflow" "this" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  for_each = local.merged_monitors
 
-  name                  = "Monitor-${local.nr_entity_prefix}${each.key}-health"
+  name                  = "Monitor-${each.key}-health"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
   issues_filter {
     name = "workflow-filter"
@@ -130,15 +240,22 @@ resource "newrelic_workflow" "this" {
 ##########################
 
 resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_monitor }
+  for_each = local.critical_synthetic_monitors
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
-  name        = "${local.nr_entity_prefix}${each.key}-Critical-monitor-health"
+  name        = "${each.key}-Critical-monitor-health"
   description = "critical-alert"
   enabled     = true
 
   nrql {
-    query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${newrelic_synthetics_monitor.all[each.key].id}') FACET monitorName"
+    query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${
+      lookup(each.value, "type") == "SIMPLE" ? newrelic_synthetics_monitor.all[each.key].id :
+      lookup(each.value, "type") == "BROWSER" ? newrelic_synthetics_monitor.browser[each.key].id :
+      lookup(each.value, "type") == "SCRIPT_API" || lookup(each.value, "type") == "SCRIPT_BROWSER" ? newrelic_synthetics_script_monitor.script[each.key].id :
+      lookup(each.value, "type") == "STEP" ? newrelic_synthetics_step_monitor.step[each.key].id :
+      lookup(each.value, "type") == "BROKEN_LINKS" ? newrelic_synthetics_broken_links_monitor.broken_links[each.key].id :
+      lookup(each.value, "type") == "CERT_CHECK" ? newrelic_synthetics_cert_check_monitor.cert_check[each.key].id :
+    null}') FACET monitorName"
   }
   critical {
     operator              = "above_or_equals"
@@ -159,16 +276,24 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
 ##########################
 
 resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor }
+  for_each = local.non_critical_synthetic_monitors
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
-  name        = "${local.nr_entity_prefix}${each.key}-Non-Critical-monitor-health"
+  name        = "${each.key}-Non-Critical-monitor-health"
   description = "non-critical-alert"
   enabled     = true
 
   nrql {
-    query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${newrelic_synthetics_monitor.all[each.key].id}') FACET monitorName"
+    query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${
+      lookup(each.value, "type") == "SIMPLE" ? newrelic_synthetics_monitor.all[each.key].id :
+      lookup(each.value, "type") == "BROWSER" ? newrelic_synthetics_monitor.browser[each.key].id :
+      lookup(each.value, "type") == "SCRIPT_API" || lookup(each.value, "type") == "SCRIPT_BROWSER" ? newrelic_synthetics_script_monitor.script[each.key].id :
+      lookup(each.value, "type") == "STEP" ? newrelic_synthetics_step_monitor.step[each.key].id :
+      lookup(each.value, "type") == "BROKEN_LINKS" ? newrelic_synthetics_broken_links_monitor.broken_links[each.key].id :
+      lookup(each.value, "type") == "CERT_CHECK" ? newrelic_synthetics_cert_check_monitor.cert_check[each.key].id :
+    null}') FACET monitorName"
   }
+
   warning {
     operator              = "above_or_equals"
     threshold             = each.value["non_critical_synthetics_threshold"]
@@ -188,9 +313,9 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
 ##########################
 
 resource "pagerduty_service" "synthetics_newrelic" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  for_each = local.merged_monitors
 
-  name                    = "NewRelic-${local.nr_entity_prefix}synthetics-${each.key}"
+  name                    = "NewRelic-synthetics-${each.key}"
   auto_resolve_timeout    = "null"
   acknowledgement_timeout = 600
   escalation_policy       = data.pagerduty_escalation_policy.ep.id
@@ -198,12 +323,12 @@ resource "pagerduty_service" "synthetics_newrelic" {
 
   incident_urgency_rule {
     type    = "constant"
-    urgency = each.value.create_critical_monitor ? "high" : "low"
+    urgency = lookup(each.value, "create_critical_monitor", false) ? "high" : "low"
   }
 }
 
 resource "pagerduty_service_integration" "synthetics_newrelic" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
+  for_each = local.merged_monitors
 
   name    = data.pagerduty_vendor.vendor["New Relic"].name
   service = pagerduty_service.synthetics_newrelic[each.key].id
@@ -217,14 +342,14 @@ resource "pagerduty_service_integration" "synthetics_newrelic" {
 ##########################
 
 resource "newrelic_alert_policy" "critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
+  for_each = local.critical_apm_resources
 
   name                = "APM-${local.nr_entity_prefix}${each.key}-response-time-Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_alert_policy" "critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
+  for_each = local.critical_apm_resources
 
   name                = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
@@ -245,7 +370,7 @@ resource "newrelic_notification_destination" "critical_apm" {
 }
 
 resource "newrelic_notification_channel" "critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
+  for_each = local.critical_apm_resources
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-response-time-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -267,7 +392,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
 }
 
 resource "newrelic_notification_channel" "critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
+  for_each = local.critical_apm_resources
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -289,7 +414,7 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
 }
 
 resource "newrelic_nrql_alert_condition" "critical_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
+  for_each = local.critical_apm_resources
 
   policy_id   = newrelic_alert_policy.critical_apm_response_time[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Critical-response-time"
@@ -308,7 +433,7 @@ resource "newrelic_nrql_alert_condition" "critical_response_time" {
 }
 
 resource "newrelic_nrql_alert_condition" "critical_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
+  for_each = local.critical_apm_resources
 
   policy_id   = newrelic_alert_policy.critical_apm_error_rate[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
@@ -327,7 +452,7 @@ resource "newrelic_nrql_alert_condition" "critical_error_rate" {
 }
 
 resource "newrelic_workflow" "critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
+  for_each = local.critical_apm_resources
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Critical-response-time"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -349,7 +474,7 @@ resource "newrelic_workflow" "critical_apm_response_time" {
 }
 
 resource "newrelic_workflow" "critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_critical_apm_resources }
+  for_each = local.critical_apm_resources
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -392,21 +517,21 @@ resource "newrelic_notification_destination" "non_critical_apm" {
 }
 
 resource "newrelic_alert_policy" "non_critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
+  for_each = local.non_critical_apm_resources
 
   name                = "APM-${local.nr_entity_prefix}${each.key}-response-time-Non_Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_alert_policy" "non_critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
+  for_each = local.non_critical_apm_resources
 
   name                = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Non_Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_notification_channel" "non_critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
+  for_each = local.non_critical_apm_resources
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-response-time-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -429,7 +554,7 @@ resource "newrelic_notification_channel" "non_critical_apm_response_time" {
 }
 
 resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
+  for_each = local.non_critical_apm_resources
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -450,7 +575,7 @@ resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
 }
 
 resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
+  for_each = local.non_critical_apm_resources
 
   policy_id   = newrelic_alert_policy.non_critical_apm_response_time[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Non_Critical-response-time"
@@ -469,7 +594,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
 }
 
 resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
+  for_each = local.non_critical_apm_resources
 
   policy_id   = newrelic_alert_policy.non_critical_apm_error_rate[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Non_Critical-error-rate"
@@ -488,7 +613,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
 }
 
 resource "newrelic_workflow" "non_critical_apm_response_time" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
+  for_each = local.non_critical_apm_resources
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Non_Critical-response-time"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -510,7 +635,7 @@ resource "newrelic_workflow" "non_critical_apm_response_time" {
 }
 
 resource "newrelic_workflow" "non_critical_apm_error_rate" {
-  for_each = { for key, value in var.monitor_name_uri : key => value if value.create_non_critical_apm_resources }
+  for_each = local.non_critical_apm_resources
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Non_Critical-error-rate"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
