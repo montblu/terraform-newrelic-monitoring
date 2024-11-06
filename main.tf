@@ -177,7 +177,7 @@ resource "newrelic_alert_policy" "synthetics" {
 resource "newrelic_notification_destination" "synthetics" {
   for_each = local.merged_monitors
 
-  name = "${pagerduty_service.synthetics_newrelic[each.key].name}"
+  name = pagerduty_service.synthetics_newrelic[each.key].name
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
   property {
@@ -200,7 +200,7 @@ resource "newrelic_notification_channel" "synthetics" {
 
   property {
     key   = "summary"
-    value = "Monitor endpoints ${lookup(each.value, "name", each.key)} failling in 1-3 locations"
+    value = "Monitor endpoints ${each.key} failling in 1-3 locations"
   }
   property {
     key   = "policy_id"
@@ -344,14 +344,14 @@ resource "pagerduty_service_integration" "synthetics_newrelic" {
 resource "newrelic_alert_policy" "critical_apm_response_time" {
   for_each = local.critical_apm_resources
 
-  name                = "APM-${local.nr_entity_prefix}${each.key}-response-time-Critical"
+  name                = "APM-${each.key}-response-time-Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_alert_policy" "critical_apm_error_rate" {
   for_each = local.critical_apm_resources
 
-  name                = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Critical"
+  name                = "APM-${each.key}-error-rate-Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
@@ -519,14 +519,14 @@ resource "newrelic_notification_destination" "non_critical_apm" {
 resource "newrelic_alert_policy" "non_critical_apm_response_time" {
   for_each = local.non_critical_apm_resources
 
-  name                = "APM-${local.nr_entity_prefix}${each.key}-response-time-Non_Critical"
+  name                = "APM-${each.key}-response-time-Non_Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_alert_policy" "non_critical_apm_error_rate" {
   for_each = local.non_critical_apm_resources
 
-  name                = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Non_Critical"
+  name                = "APM-${each.key}-error-rate-Non_Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
