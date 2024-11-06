@@ -177,7 +177,7 @@ resource "newrelic_alert_policy" "synthetics" {
 resource "newrelic_notification_destination" "synthetics" {
   for_each = local.merged_monitors
 
-  name = "${pagerduty_service.synthetics_newrelic[each.key].name}-synthetics"
+  name = "${pagerduty_service.synthetics_newrelic[each.key].name}"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
   property {
