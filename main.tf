@@ -372,7 +372,7 @@ resource "newrelic_notification_destination" "critical_apm" {
 resource "newrelic_notification_channel" "critical_apm_response_time" {
   for_each = local.critical_apm_resources
 
-  name           = "APM-${local.nr_entity_prefix}${each.key}-response-time-Critical"
+  name           = "APM-${each.key}-response-time-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
   destination_id = newrelic_notification_destination.critical_apm.id
   product        = "IINT"
@@ -394,7 +394,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
 resource "newrelic_notification_channel" "critical_apm_error_rate" {
   for_each = local.critical_apm_resources
 
-  name           = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Critical"
+  name           = "APM-${each.key}-error-rate-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
   destination_id = newrelic_notification_destination.critical_apm.id
   product        = "IINT"
@@ -533,7 +533,7 @@ resource "newrelic_alert_policy" "non_critical_apm_error_rate" {
 resource "newrelic_notification_channel" "non_critical_apm_response_time" {
   for_each = local.non_critical_apm_resources
 
-  name           = "APM-${local.nr_entity_prefix}${each.key}-response-time-Non_Critical"
+  name           = "APM-${each.key}-response-time-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
   destination_id = newrelic_notification_destination.non_critical_apm.id
   product        = "IINT"
@@ -556,7 +556,7 @@ resource "newrelic_notification_channel" "non_critical_apm_response_time" {
 resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
   for_each = local.non_critical_apm_resources
 
-  name           = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Non_Critical"
+  name           = "APM-${each.key}-error-rate-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
   destination_id = newrelic_notification_destination.non_critical_apm.id
   product        = "IINT"
