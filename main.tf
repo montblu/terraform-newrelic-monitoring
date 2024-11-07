@@ -22,19 +22,17 @@ locals {
   merged_monitors     = merge(local.simple_monitors, local.browser_monitors, local.script_monitors, local.step_monitors, local.broken_links_monitors, local.cert_check_monitors)
   merged_monitor_vars = merge(var.simple_monitors, var.browser_monitors, var.script_monitors, var.step_monitors, var.broken_links_monitors, var.cert_check_monitors)
 
-  non_critical_synthetic_monitors = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor }
-  critical_synthetic_monitors     = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_monitor }
-
-  non_critical_apm_resources = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_apm_resources }
-  critical_apm_resources     = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_apm_resources }
+  non_critical_apm_resources = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_non_critical_apm_resources", false) }
+  critical_apm_resources     = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_critical_apm_resources", false) }
 }
 
 
 data "newrelic_entity" "this" {
   for_each = merge(local.non_critical_apm_resources, local.critical_apm_resources)
 
-  name = each.key
-  type = var.newrelic_entity_type
+  name   = each.key
+  domain = each.value["newrelic_entity_domain"]
+  type   = each.value["newrelic_entity_type"]
 }
 data "pagerduty_vendor" "vendor" {
   for_each = toset(local.pagerduty_vendors)
@@ -77,7 +75,7 @@ resource "newrelic_synthetics_monitor" "all" {
 resource "newrelic_synthetics_monitor" "browser" {
   for_each = local.browser_monitors
 
-  name                 = each.key
+  name                 = "Browser-${each.key}"
   type                 = each.value["type"]
   period               = each.value["period"]
   status               = each.value["status"]
@@ -240,7 +238,7 @@ resource "newrelic_workflow" "this" {
 ##########################
 
 resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
-  for_each = local.critical_synthetic_monitors
+  for_each = { for key, value in merge(var.simple_monitors, var.script_monitors, var.step_monitors, var.cert_check_monitors, var.broken_links_monitors) : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_monitor }
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${each.key}-Critical-monitor-health"
@@ -250,12 +248,10 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
   nrql {
     query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${
       lookup(each.value, "type") == "SIMPLE" ? newrelic_synthetics_monitor.all[each.key].id :
-      lookup(each.value, "type") == "BROWSER" ? newrelic_synthetics_monitor.browser[each.key].id :
       lookup(each.value, "type") == "SCRIPT_API" || lookup(each.value, "type") == "SCRIPT_BROWSER" ? newrelic_synthetics_script_monitor.script[each.key].id :
       lookup(each.value, "type") == "STEP" ? newrelic_synthetics_step_monitor.step[each.key].id :
       lookup(each.value, "type") == "BROKEN_LINKS" ? newrelic_synthetics_broken_links_monitor.broken_links[each.key].id :
-      lookup(each.value, "type") == "CERT_CHECK" ? newrelic_synthetics_cert_check_monitor.cert_check[each.key].id :
-    null}') FACET monitorName"
+    newrelic_synthetics_cert_check_monitor.cert_check[each.key].id}') FACET monitorName"
   }
   critical {
     operator              = each.value["critical_synthetics_operator"]
@@ -269,6 +265,29 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
   aggregation_window             = each.value["critical_synthetics_aggregation_window"]
 }
 
+resource "newrelic_nrql_alert_condition" "browser_critical_health_synthetics" {
+  for_each = { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_monitor }
+
+  policy_id   = newrelic_alert_policy.synthetics[each.key].id
+  name        = "${each.key}-Browser-Critical-monitor-health"
+  description = "critical-alert"
+  enabled     = true
+
+  nrql {
+    query = "SELECT percentile(duration, 50) / 1000 FROM SyntheticCheck WHERE entityGuid IN ('${newrelic_synthetics_monitor.browser[each.key].id}') FACET location, monitorName"
+  }
+  critical {
+    operator              = each.value["critical_browser_synthetics_operator"]
+    threshold             = each.value["critical_browser_synthetics_threshold"]
+    threshold_duration    = each.value["critical_browser_synthetics_threshold_duration"]
+    threshold_occurrences = each.value["critical_browser_synthetics_threshold_occurrences"]
+  }
+  expiration_duration            = each.value["critical_browser_synthetics_expiration_duration"]
+  open_violation_on_expiration   = false
+  close_violations_on_expiration = true
+  aggregation_window             = each.value["critical_browser_synthetics_aggregation_window"]
+}
+
 ##########################
 
 # Non-Critical Synthetics monitors
@@ -276,7 +295,7 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
 ##########################
 
 resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
-  for_each = local.non_critical_synthetic_monitors
+  for_each = { for key, value in merge(var.simple_monitors, var.script_monitors, var.step_monitors, var.cert_check_monitors, var.broken_links_monitors) : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor }
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${each.key}-Non-Critical-monitor-health"
@@ -286,12 +305,10 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
   nrql {
     query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${
       lookup(each.value, "type") == "SIMPLE" ? newrelic_synthetics_monitor.all[each.key].id :
-      lookup(each.value, "type") == "BROWSER" ? newrelic_synthetics_monitor.browser[each.key].id :
       lookup(each.value, "type") == "SCRIPT_API" || lookup(each.value, "type") == "SCRIPT_BROWSER" ? newrelic_synthetics_script_monitor.script[each.key].id :
       lookup(each.value, "type") == "STEP" ? newrelic_synthetics_step_monitor.step[each.key].id :
       lookup(each.value, "type") == "BROKEN_LINKS" ? newrelic_synthetics_broken_links_monitor.broken_links[each.key].id :
-      lookup(each.value, "type") == "CERT_CHECK" ? newrelic_synthetics_cert_check_monitor.cert_check[each.key].id :
-    null}') FACET monitorName"
+    newrelic_synthetics_cert_check_monitor.cert_check[each.key].id}') FACET monitorName"
   }
 
   warning {
@@ -304,6 +321,30 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
   open_violation_on_expiration   = false
   close_violations_on_expiration = true
   aggregation_window             = each.value["non_critical_synthetics_aggregation_window"]
+}
+
+resource "newrelic_nrql_alert_condition" "browser_noncritical_health_synthetics" {
+  for_each = { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor }
+
+  policy_id   = newrelic_alert_policy.synthetics[each.key].id
+  name        = "${each.key}-Browser-Non-Critical-monitor-health"
+  description = "non-critical-alert"
+  enabled     = true
+
+  nrql {
+    query = "SELECT percentile(duration, 50) / 1000 FROM SyntheticCheck WHERE entityGuid IN ('${newrelic_synthetics_monitor.browser[each.key].id}') FACET location, monitorName"
+  }
+
+  warning {
+    operator              = each.value["non_critical_browser_synthetics_operator"]
+    threshold             = each.value["non_critical_browser_synthetics_threshold"]
+    threshold_duration    = each.value["non_critical_browser_synthetics_threshold_duration"]
+    threshold_occurrences = each.value["non_critical_browser_synthetics_threshold_occurrences"]
+  }
+  expiration_duration            = each.value["non_critical_browser_synthetics_expiration_duration"]
+  open_violation_on_expiration   = false
+  close_violations_on_expiration = true
+  aggregation_window             = each.value["non_critical_browser_synthetics_aggregation_window"]
 }
 
 ##########################

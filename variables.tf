@@ -13,12 +13,6 @@ variable "newrelic_resource_name_suffix" {
   default = ""
 }
 
-variable "newrelic_entity_type" {
-  description = "NewRelic type"
-  type        = string
-  default     = "APPLICATION"
-}
-
 variable "simple_monitors" {
   type = map(object({
     name                                          = string
@@ -51,46 +45,50 @@ variable "simple_monitors" {
     create_critical_monitor                       = optional(bool, false)
     create_non_critical_apm_resources             = optional(bool, false)
     create_critical_apm_resources                 = optional(bool, false)
+    newrelic_entity_domain                        = optional(string, "APM")
+    newrelic_entity_type                          = optional(string, "APPLICATION")
   }))
   default = {}
 }
 
 variable "browser_monitors" {
   type = map(object({
-    name                                          = string
-    uri                                           = string
-    type                                          = optional(string, "BROWSER")
-    period                                        = optional(string, "EVERY_5_MINUTES")
-    status                                        = optional(string, "ENABLED")
-    locations_public                              = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
-    validation_string                             = optional(string, "")
-    verify_ssl                                    = optional(bool, true)
-    custom_header                                 = optional(list(map(string)))
-    runtime_type                                  = optional(string, "CHROME_BROWSER")
-    runtime_type_version                          = optional(string, "100")
-    script_language                               = optional(string, "JAVASCRIPT")
-    devices                                       = optional(list(string), ["DESKTOP", "MOBILE_LANDSCAPE", "MOBILE_PORTRAIT", "TABLET_LANDSCAPE", "TABLET_PORTRAIT"])
-    browsers                                      = optional(list(string), ["CHROME", "FIREFOX"])
-    critical_synthetics_operator                  = optional(string, "above_or_equals")
-    critical_synthetics_threshold                 = optional(number, 3)
-    critical_synthetics_threshold_duration        = optional(number, 300)
-    critical_synthetics_threshold_occurrences     = optional(string, "at_least_once")
-    critical_synthetics_expiration_duration       = optional(number, 300)
-    critical_synthetics_aggregation_window        = optional(number, 300)
-    non_critical_synthetics_operator              = optional(string, "above_or_equals")
-    non_critical_synthetics_threshold             = optional(number, 1)
-    non_critical_synthetics_threshold_duration    = optional(number, 900)
-    non_critical_synthetics_threshold_occurrences = optional(string, "at_least_once")
-    non_critical_synthetics_expiration_duration   = optional(number, 600)
-    non_critical_synthetics_aggregation_window    = optional(number, 300)
-    critical_response_time                        = optional(number, 0.7)
-    non_critical_response_time                    = optional(number, 0.5)
-    critical_error_rate                           = optional(number, 15)
-    non_critical_error_rate                       = optional(number, 7)
-    create_non_critical_monitor                   = optional(bool, false)
-    create_critical_monitor                       = optional(bool, false)
-    create_non_critical_apm_resources             = optional(bool, false)
-    create_critical_apm_resources                 = optional(bool, false)
+    name                                                  = string
+    uri                                                   = string
+    type                                                  = optional(string, "BROWSER")
+    period                                                = optional(string, "EVERY_5_MINUTES")
+    status                                                = optional(string, "ENABLED")
+    locations_public                                      = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
+    validation_string                                     = optional(string, "")
+    verify_ssl                                            = optional(bool, true)
+    custom_header                                         = optional(list(map(string)))
+    runtime_type                                          = optional(string, "CHROME_BROWSER")
+    runtime_type_version                                  = optional(string, "100")
+    script_language                                       = optional(string, "JAVASCRIPT")
+    devices                                               = optional(list(string), ["DESKTOP", "MOBILE_LANDSCAPE", "MOBILE_PORTRAIT", "TABLET_LANDSCAPE", "TABLET_PORTRAIT"])
+    browsers                                              = optional(list(string), ["CHROME", "FIREFOX"])
+    critical_browser_synthetics_operator                  = optional(string, "above_or_equals")
+    critical_browser_synthetics_threshold                 = optional(number, 2)
+    critical_browser_synthetics_threshold_duration        = optional(number, 300)
+    critical_browser_synthetics_threshold_occurrences     = optional(string, "at_least_once")
+    critical_browser_synthetics_expiration_duration       = optional(number, 300)
+    critical_browser_synthetics_aggregation_window        = optional(number, 300)
+    non_critical_browser_synthetics_operator              = optional(string, "above_or_equals")
+    non_critical_browser_synthetics_threshold             = optional(number, 1.5)
+    non_critical_browser_synthetics_threshold_duration    = optional(number, 900)
+    non_critical_browser_synthetics_threshold_occurrences = optional(string, "at_least_once")
+    non_critical_browser_synthetics_expiration_duration   = optional(number, 600)
+    non_critical_browser_synthetics_aggregation_window    = optional(number, 300)
+    critical_response_time                                = optional(number, 0.7)
+    non_critical_response_time                            = optional(number, 0.5)
+    critical_error_rate                                   = optional(number, 15)
+    non_critical_error_rate                               = optional(number, 7)
+    create_non_critical_monitor                           = optional(bool, false)
+    create_critical_monitor                               = optional(bool, false)
+    create_non_critical_apm_resources                     = optional(bool, false)
+    create_critical_apm_resources                         = optional(bool, false)
+    newrelic_entity_domain                                = optional(string, "APM")
+    newrelic_entity_type                                  = optional(string, "APPLICATION")
   }))
   default = {}
 }
@@ -126,6 +124,8 @@ variable "script_monitors" {
     create_critical_monitor                       = optional(bool, false)
     create_non_critical_apm_resources             = optional(bool, false)
     create_critical_apm_resources                 = optional(bool, false)
+    newrelic_entity_domain                        = optional(string, "APM")
+    newrelic_entity_type                          = optional(string, "APPLICATION")
     # SCRIPT_BROWSER only additional values
     enable_screenshot_on_failure_and_script = optional(bool, false)
     browsers                                = optional(list(string), ["CHROME", "FIREFOX"])
@@ -171,6 +171,8 @@ variable "step_monitors" {
     create_critical_monitor                       = optional(bool, false)
     create_non_critical_apm_resources             = optional(bool, false)
     create_critical_apm_resources                 = optional(bool, false)
+    newrelic_entity_domain                        = optional(string, "APM")
+    newrelic_entity_type                          = optional(string, "APPLICATION")
   }))
   default = {}
 }
@@ -205,6 +207,8 @@ variable "broken_links_monitors" {
     create_critical_monitor                       = optional(bool, false)
     create_non_critical_apm_resources             = optional(bool, false)
     create_critical_apm_resources                 = optional(bool, false)
+    newrelic_entity_domain                        = optional(string, "APM")
+    newrelic_entity_type                          = optional(string, "APPLICATION")
   }))
   default = {}
 }
@@ -240,6 +244,8 @@ variable "cert_check_monitors" {
     create_critical_monitor                       = optional(bool, false)
     create_non_critical_apm_resources             = optional(bool, false)
     create_critical_apm_resources                 = optional(bool, false)
+    newrelic_entity_domain                        = optional(string, "APM")
+    newrelic_entity_type                          = optional(string, "APPLICATION")
   }))
   default = {}
 }
