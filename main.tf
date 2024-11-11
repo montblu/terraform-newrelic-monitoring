@@ -19,21 +19,31 @@ locals {
   broken_links_monitors = { for key, value in var.broken_links_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor || value.create_critical_monitor }
   cert_check_monitors   = { for key, value in var.cert_check_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor || value.create_critical_monitor }
 
-  merged_monitors     = merge(local.simple_monitors, local.browser_monitors, local.script_monitors, local.step_monitors, local.broken_links_monitors, local.cert_check_monitors)
-  merged_monitor_vars = merge(var.simple_monitors, var.browser_monitors, var.script_monitors, var.step_monitors, var.broken_links_monitors, var.cert_check_monitors)
+  merged_monitors = merge(local.simple_monitors, local.browser_monitors, local.script_monitors, local.step_monitors, local.broken_links_monitors, local.cert_check_monitors)
 
-  non_critical_apm_resources = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_non_critical_apm_resources", false) }
-  critical_apm_resources     = { for key, value in local.merged_monitor_vars : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_critical_apm_resources", false) }
+  non_critical_apm_resources = { for key, value in var.simple_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_non_critical_apm_resources", false) }
+  critical_apm_resources     = { for key, value in var.simple_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_critical_apm_resources", false) }
+
+  non_critical_browser_application_alert = { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_non_critical_browser_alert", false) }
+  critical_browser_application_alert     = { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_critical_browser_alert", false) }
 }
-
 
 data "newrelic_entity" "this" {
   for_each = merge(local.non_critical_apm_resources, local.critical_apm_resources)
 
   name   = each.key
-  domain = each.value["newrelic_entity_domain"]
-  type   = each.value["newrelic_entity_type"]
+  domain = "APM"
+  type   = "APPLICATION"
 }
+
+data "newrelic_entity" "browser_application" {
+  for_each = merge(local.non_critical_browser_application_alert, local.critical_browser_application_alert)
+
+  name   = each.key
+  domain = "BROWSER"
+  type   = "APPLICATION"
+}
+
 data "pagerduty_vendor" "vendor" {
   for_each = toset(local.pagerduty_vendors)
   name     = each.key
@@ -699,6 +709,184 @@ resource "newrelic_workflow" "non_critical_apm_error_rate" {
 
 ##########################
 
+# Non Critical Browser Alerts
+
+##########################
+
+resource "newrelic_notification_destination" "non_critical_browser" {
+  name = "${pagerduty_service.non_critical["NewRelic"].name}-Browser"
+  type = "PAGERDUTY_SERVICE_INTEGRATION"
+
+  property {
+    key   = ""
+    value = ""
+  }
+  auth_token {
+    prefix = "service-integration-id"
+    token  = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+  }
+}
+
+resource "newrelic_alert_policy" "non_critical_browser_pageload" {
+  for_each = local.non_critical_browser_application_alert
+
+  name                = "Browser-${each.key}-Non-Critical-Pageload"
+  incident_preference = "PER_CONDITION_AND_TARGET"
+}
+
+resource "newrelic_notification_channel" "non_critical_browser_pageload" {
+  for_each = local.non_critical_browser_application_alert
+
+  name           = "Browser-${each.key}-Non-Critical-Pageload"
+  type           = "PAGERDUTY_SERVICE_INTEGRATION"
+  destination_id = newrelic_notification_destination.non_critical_browser.id
+  product        = "IINT"
+  property {
+    key   = "summary"
+    value = "Browser Service ${data.newrelic_entity.browser_application[each.key].name} ${newrelic_nrql_alert_condition.non_critical_browser_pageload[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_browser_pageload[each.key].warning[0].threshold}seconds"
+  }
+  property {
+    key   = "policy_id"
+    value = newrelic_alert_policy.non_critical_browser_pageload[each.key].id
+  }
+  property {
+    key   = "service_key"
+    value = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+  }
+}
+
+resource "newrelic_nrql_alert_condition" "non_critical_browser_pageload" {
+  for_each = local.non_critical_browser_application_alert
+
+  policy_id   = newrelic_alert_policy.non_critical_browser_pageload[each.key].id
+  name        = "${data.newrelic_entity.browser_application[each.key].name}-Non-Critical-Browser-Pageload"
+  description = "average pageload time"
+  enabled     = true
+
+  nrql {
+    query = "SELECT average(duration) FROM PageView WHERE entityGuid IN ('${data.newrelic_entity.browser_application[each.key].guid}') FACET appName"
+  }
+  warning {
+    operator              = "above_or_equals"
+    threshold             = each.value["non_critical_browser_pageload"]
+    threshold_duration    = 900
+    threshold_occurrences = "at_least_once"
+  }
+}
+
+resource "newrelic_workflow" "non_critical_browser_pageload" {
+  for_each = local.non_critical_browser_application_alert
+
+  name                  = "${data.newrelic_entity.browser_application[each.key].name}-Non-Critical-Browser-Pageload"
+  muting_rules_handling = "NOTIFY_ALL_ISSUES"
+
+  issues_filter {
+    name = "workflow-filter"
+    type = "FILTER"
+
+    predicate {
+      attribute = "labels.policyIds"
+      operator  = "EXACTLY_MATCHES"
+      values    = [newrelic_alert_policy.non_critical_browser_pageload[each.key].id]
+    }
+  }
+  destination {
+    channel_id            = newrelic_notification_channel.non_critical_browser_pageload[each.key].id
+    notification_triggers = ["ACTIVATED", "CLOSED"]
+  }
+}
+
+##########################
+
+# Critical Browser Alerts
+
+##########################
+
+resource "newrelic_notification_destination" "critical_browser" {
+  name = "${pagerduty_service.critical["NewRelic"].name}-Browser"
+  type = "PAGERDUTY_SERVICE_INTEGRATION"
+
+  property {
+    key   = ""
+    value = ""
+  }
+  auth_token {
+    prefix = "service-integration-id"
+    token  = pagerduty_service_integration.critical["NewRelic"].integration_key
+  }
+}
+
+resource "newrelic_alert_policy" "critical_browser_pageload" {
+  for_each = local.critical_browser_application_alert
+
+  name                = "Browser-${each.key}-Critical-Pageload"
+  incident_preference = "PER_CONDITION_AND_TARGET"
+}
+
+resource "newrelic_notification_channel" "critical_browser_pageload" {
+  for_each = local.critical_browser_application_alert
+
+  name           = "Browser-${each.key}-Critical-Pageload"
+  type           = "PAGERDUTY_SERVICE_INTEGRATION"
+  destination_id = newrelic_notification_destination.critical_browser.id
+  product        = "IINT"
+  property {
+    key   = "summary"
+    value = "Browser Service ${data.newrelic_entity.browser_application[each.key].name} ${newrelic_nrql_alert_condition.critical_browser_pageload[each.key].description} > ${newrelic_nrql_alert_condition.critical_browser_pageload[each.key].critical[0].threshold}seconds"
+  }
+  property {
+    key   = "policy_id"
+    value = newrelic_alert_policy.critical_browser_pageload[each.key].id
+  }
+  property {
+    key   = "service_key"
+    value = pagerduty_service_integration.critical["NewRelic"].integration_key
+  }
+}
+
+resource "newrelic_nrql_alert_condition" "critical_browser_pageload" {
+  for_each = local.critical_browser_application_alert
+
+  policy_id   = newrelic_alert_policy.critical_browser_pageload[each.key].id
+  name        = "${data.newrelic_entity.browser_application[each.key].name}-Critical-Browser-Pageload"
+  description = "average pageload time"
+  enabled     = true
+
+  nrql {
+    query = "SELECT average(duration) FROM PageView WHERE entityGuid IN ('${data.newrelic_entity.browser_application[each.key].guid}') FACET appName"
+  }
+  critical {
+    operator              = "above_or_equals"
+    threshold             = each.value["critical_browser_pageload"]
+    threshold_duration    = 300
+    threshold_occurrences = "at_least_once"
+  }
+}
+
+resource "newrelic_workflow" "critical_browser_pageload" {
+  for_each = local.critical_browser_application_alert
+
+  name                  = "${data.newrelic_entity.browser_application[each.key].name}-Critical-Browser-Pageload"
+  muting_rules_handling = "NOTIFY_ALL_ISSUES"
+
+  issues_filter {
+    name = "workflow-filter"
+    type = "FILTER"
+
+    predicate {
+      attribute = "labels.policyIds"
+      operator  = "EXACTLY_MATCHES"
+      values    = [newrelic_alert_policy.critical_browser_pageload[each.key].id]
+    }
+  }
+  destination {
+    channel_id            = newrelic_notification_channel.critical_browser_pageload[each.key].id
+    notification_triggers = ["ACTIVATED", "CLOSED"]
+  }
+}
+
+##########################
+
 # Pagerduty Resources
 
 ##########################
@@ -711,7 +899,7 @@ resource "pagerduty_service" "critical" {
     if lookup(value, "critical", false)
   }
 
-  name                    = "${local.nr_entity_prefix}${each.key}-Critical"
+  name                    = "${local.nr_entity_prefix}${each.key}${local.nr_entity_suffix}-Critical"
   auto_resolve_timeout    = "null"
   acknowledgement_timeout = 600
   escalation_policy       = data.pagerduty_escalation_policy.ep.id
@@ -742,7 +930,7 @@ resource "pagerduty_service" "non_critical" {
     if lookup(value, "non_critical", false)
   }
 
-  name                    = "${local.nr_entity_prefix}${each.key}-Non_Critical"
+  name                    = "${local.nr_entity_prefix}${each.key}${local.nr_entity_suffix}-Non_Critical"
   auto_resolve_timeout    = "null"
   acknowledgement_timeout = 600
   escalation_policy       = data.pagerduty_escalation_policy.ep.id
