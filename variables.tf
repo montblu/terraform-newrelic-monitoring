@@ -81,8 +81,8 @@ variable "browser_monitors" {
     create_critical_monitor                               = optional(bool, false)
     create_critical_browser_alert                         = optional(bool, false)
     create_non_critical_browser_alert                     = optional(bool, false)
-    critical_browser_pageload                             = optional(number, 10)
-    non_critical_browser_pageload                         = optional(number, 5)
+    critical_browser_pageload                             = optional(number, 7)
+    non_critical_browser_pageload                         = optional(number, 3.5)
   }))
   default = {}
 }
