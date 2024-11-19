@@ -231,6 +231,9 @@ resource "newrelic_alert_policy" "critical_apm_error_rate" {
 }
 
 resource "newrelic_notification_destination" "critical_apm" {
+
+  count = length(var.monitor_name_uri) > 0 ? 1 : 0
+
   name = "${pagerduty_service.critical["NewRelic"].name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
@@ -249,7 +252,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-response-time-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
-  destination_id = newrelic_notification_destination.critical_apm.id
+  destination_id = newrelic_notification_destination.critical_apm[0].id
   product        = "IINT"
 
   property {
@@ -271,7 +274,7 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
-  destination_id = newrelic_notification_destination.critical_apm.id
+  destination_id = newrelic_notification_destination.critical_apm[0].id
   product        = "IINT"
 
   property {
@@ -378,6 +381,9 @@ resource "newrelic_workflow" "critical_apm_error_rate" {
 
 
 resource "newrelic_notification_destination" "non_critical_apm" {
+
+  count = length(var.monitor_name_uri) > 0 ? 1 : 0
+
   name = "${pagerduty_service.non_critical["NewRelic"].name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
@@ -410,7 +416,7 @@ resource "newrelic_notification_channel" "non_critical_apm_response_time" {
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-response-time-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
-  destination_id = newrelic_notification_destination.non_critical_apm.id
+  destination_id = newrelic_notification_destination.non_critical_apm[0].id
   product        = "IINT"
 
   property {
@@ -433,7 +439,7 @@ resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
 
   name           = "APM-${local.nr_entity_prefix}${each.key}-error-rate-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
-  destination_id = newrelic_notification_destination.non_critical_apm.id
+  destination_id = newrelic_notification_destination.non_critical_apm[0].id
   product        = "IINT"
   property {
     key   = "summary"
