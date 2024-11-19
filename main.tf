@@ -247,8 +247,10 @@ resource "newrelic_workflow" "this" {
 
 ##########################
 
+
+# SIMPLE Monitors
 resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
-  for_each = { for key, value in merge(var.simple_monitors, var.script_monitors, var.step_monitors, var.cert_check_monitors, var.broken_links_monitors) : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_monitor }
+  for_each = { for key, value in merge(var.simple_monitors, var.script_monitors, var.cert_check_monitors, var.broken_links_monitors) : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_monitor }
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${each.key}-Critical-monitor-health"
@@ -259,7 +261,6 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
     query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${
       lookup(each.value, "type") == "SIMPLE" ? newrelic_synthetics_monitor.all[each.key].id :
       lookup(each.value, "type") == "SCRIPT_API" || lookup(each.value, "type") == "SCRIPT_BROWSER" ? newrelic_synthetics_script_monitor.script[each.key].id :
-      lookup(each.value, "type") == "STEP" ? newrelic_synthetics_step_monitor.step[each.key].id :
       lookup(each.value, "type") == "BROKEN_LINKS" ? newrelic_synthetics_broken_links_monitor.broken_links[each.key].id :
     newrelic_synthetics_cert_check_monitor.cert_check[each.key].id}') FACET monitorName"
   }
@@ -275,6 +276,7 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
   aggregation_window             = each.value["critical_synthetics_aggregation_window"]
 }
 
+# SIMPLE BROWSER Monitors
 resource "newrelic_nrql_alert_condition" "browser_critical_health_synthetics" {
   for_each = { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_monitor }
 
@@ -298,14 +300,65 @@ resource "newrelic_nrql_alert_condition" "browser_critical_health_synthetics" {
   aggregation_window             = each.value["critical_browser_synthetics_aggregation_window"]
 }
 
+# SCRIPT Monitors
+
+
+# STEP Monitors
+resource "newrelic_nrql_alert_condition" "step_critical_health_synthetics" {
+  for_each = { for key, value in var.step_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_monitor }
+
+  policy_id   = newrelic_alert_policy.synthetics[each.key].id
+  name        = "${each.key}-Critical-step-monitor-health"
+  description = "critical-alert"
+  enabled     = true
+
+  nrql {
+    query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${newrelic_synthetics_step_monitor.step[each.key].id}') FACET location, monitorName"
+  }
+  critical {
+    operator              = each.value["critical_synthetics_operator"]
+    threshold             = each.value["critical_synthetics_threshold"]
+    threshold_duration    = each.value["critical_synthetics_threshold_duration"]
+    threshold_occurrences = each.value["critical_synthetics_threshold_occurrences"]
+  }
+  expiration_duration            = each.value["critical_synthetics_expiration_duration"]
+  open_violation_on_expiration   = false
+  close_violations_on_expiration = true
+  aggregation_window             = each.value["critical_synthetics_aggregation_window"]
+}
+
+resource "newrelic_nrql_alert_condition" "step_critical_duration_synthetics" {
+  for_each = { for key, value in var.step_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_critical_monitor }
+
+  policy_id   = newrelic_alert_policy.synthetics[each.key].id
+  name        = "${each.key}-Critical-step-monitor-duration"
+  description = "critical-alert"
+  enabled     = true
+
+  nrql {
+    query = "SELECT percentile(duration, 50) / 1000 FROM SyntheticCheck WHERE entityGuid IN ('${newrelic_synthetics_step_monitor.step[each.key].id}') FACET location, monitorName"
+  }
+  critical {
+    operator              = each.value["critical_duration_synthetics_operator"]
+    threshold             = each.value["critical_duration_synthetics_threshold"]
+    threshold_duration    = each.value["critical_duration_synthetics_threshold_duration"]
+    threshold_occurrences = each.value["critical_duration_synthetics_threshold_occurrences"]
+  }
+  expiration_duration            = each.value["critical_duration_synthetics_expiration_duration"]
+  open_violation_on_expiration   = false
+  close_violations_on_expiration = true
+  aggregation_window             = each.value["critical_duration_synthetics_aggregation_window"]
+}
+
 ##########################
 
 # Non-Critical Synthetics monitors
 
 ##########################
 
+# SIMPLE Monitor alerts
 resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
-  for_each = { for key, value in merge(var.simple_monitors, var.script_monitors, var.step_monitors, var.cert_check_monitors, var.broken_links_monitors) : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor }
+  for_each = { for key, value in merge(var.simple_monitors, var.script_monitors, var.cert_check_monitors, var.broken_links_monitors) : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor }
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${each.key}-Non-Critical-monitor-health"
@@ -316,7 +369,6 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
     query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${
       lookup(each.value, "type") == "SIMPLE" ? newrelic_synthetics_monitor.all[each.key].id :
       lookup(each.value, "type") == "SCRIPT_API" || lookup(each.value, "type") == "SCRIPT_BROWSER" ? newrelic_synthetics_script_monitor.script[each.key].id :
-      lookup(each.value, "type") == "STEP" ? newrelic_synthetics_step_monitor.step[each.key].id :
       lookup(each.value, "type") == "BROKEN_LINKS" ? newrelic_synthetics_broken_links_monitor.broken_links[each.key].id :
     newrelic_synthetics_cert_check_monitor.cert_check[each.key].id}') FACET monitorName"
   }
@@ -333,6 +385,7 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
   aggregation_window             = each.value["non_critical_synthetics_aggregation_window"]
 }
 
+# SIMPLE BROWSER Monitor alerts
 resource "newrelic_nrql_alert_condition" "browser_noncritical_health_synthetics" {
   for_each = { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor }
 
@@ -355,6 +408,53 @@ resource "newrelic_nrql_alert_condition" "browser_noncritical_health_synthetics"
   open_violation_on_expiration   = false
   close_violations_on_expiration = true
   aggregation_window             = each.value["non_critical_browser_synthetics_aggregation_window"]
+}
+
+# STEP Monitor alerts
+resource "newrelic_nrql_alert_condition" "step_non_critical_health_synthetics" {
+  for_each = { for key, value in var.step_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor }
+
+  policy_id   = newrelic_alert_policy.synthetics[each.key].id
+  name        = "${each.key}-Non-Critical-step-monitor-health"
+  description = "non-critical-alert"
+  enabled     = true
+
+  nrql {
+    query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${newrelic_synthetics_step_monitor.step[each.key].id}') FACET location, monitorName"
+  }
+  warning {
+    operator              = each.value["non_critical_synthetics_operator"]
+    threshold             = each.value["non_critical_synthetics_threshold"]
+    threshold_duration    = each.value["non_critical_synthetics_threshold_duration"]
+    threshold_occurrences = each.value["non_critical_synthetics_threshold_occurrences"]
+  }
+  expiration_duration            = each.value["non_critical_synthetics_expiration_duration"]
+  open_violation_on_expiration   = false
+  close_violations_on_expiration = true
+  aggregation_window             = each.value["non_critical_synthetics_aggregation_window"]
+}
+
+resource "newrelic_nrql_alert_condition" "step_non_critical_duration_synthetics" {
+  for_each = { for key, value in var.step_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if value.create_non_critical_monitor }
+
+  policy_id   = newrelic_alert_policy.synthetics[each.key].id
+  name        = "${each.key}-Non-Critical-step-monitor-duration"
+  description = "non-critical-alert"
+  enabled     = true
+
+  nrql {
+    query = "SELECT percentile(duration, 50) / 1000 FROM SyntheticCheck WHERE entityGuid IN ('${newrelic_synthetics_step_monitor.step[each.key].id}') FACET location, monitorName"
+  }
+  warning {
+    operator              = each.value["non_critical_duration_synthetics_operator"]
+    threshold             = each.value["non_critical_duration_synthetics_threshold"]
+    threshold_duration    = each.value["non_critical_duration_synthetics_threshold_duration"]
+    threshold_occurrences = each.value["non_critical_duration_synthetics_threshold_occurrences"]
+  }
+  expiration_duration            = each.value["non_critical_duration_synthetics_expiration_duration"]
+  open_violation_on_expiration   = false
+  close_violations_on_expiration = true
+  aggregation_window             = each.value["non_critical_duration_synthetics_aggregation_window"]
 }
 
 ##########################
@@ -407,6 +507,8 @@ resource "newrelic_alert_policy" "critical_apm_error_rate" {
 }
 
 resource "newrelic_notification_destination" "critical_apm" {
+  count = length(var.simple_monitors) > 0 ? 1 : 0
+
   name = "${pagerduty_service.critical["NewRelic"].name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
@@ -425,7 +527,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
 
   name           = "APM-${each.key}-response-time-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
-  destination_id = newrelic_notification_destination.critical_apm.id
+  destination_id = newrelic_notification_destination.critical_apm[0].id
   product        = "IINT"
 
   property {
@@ -447,7 +549,7 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
 
   name           = "APM-${each.key}-error-rate-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
-  destination_id = newrelic_notification_destination.critical_apm.id
+  destination_id = newrelic_notification_destination.critical_apm[0].id
   product        = "IINT"
 
   property {
@@ -554,6 +656,8 @@ resource "newrelic_workflow" "critical_apm_error_rate" {
 
 
 resource "newrelic_notification_destination" "non_critical_apm" {
+  count = length(var.simple_monitors) > 0 ? 1 : 0
+
   name = "${pagerduty_service.non_critical["NewRelic"].name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
@@ -586,7 +690,7 @@ resource "newrelic_notification_channel" "non_critical_apm_response_time" {
 
   name           = "APM-${each.key}-response-time-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
-  destination_id = newrelic_notification_destination.non_critical_apm.id
+  destination_id = newrelic_notification_destination.non_critical_apm[0].id
   product        = "IINT"
 
   property {
@@ -609,7 +713,7 @@ resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
 
   name           = "APM-${each.key}-error-rate-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
-  destination_id = newrelic_notification_destination.non_critical_apm.id
+  destination_id = newrelic_notification_destination.non_critical_apm[0].id
   product        = "IINT"
   property {
     key   = "summary"
@@ -714,6 +818,8 @@ resource "newrelic_workflow" "non_critical_apm_error_rate" {
 ##########################
 
 resource "newrelic_notification_destination" "non_critical_browser" {
+  count = length(var.browser_monitors) > 0 ? 1 : 0
+
   name = "${pagerduty_service.non_critical["NewRelic"].name}-Browser"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
@@ -739,7 +845,7 @@ resource "newrelic_notification_channel" "non_critical_browser_pageload" {
 
   name           = "Browser-${each.key}-Non-Critical-Pageload"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
-  destination_id = newrelic_notification_destination.non_critical_browser.id
+  destination_id = newrelic_notification_destination.non_critical_browser[0].id
   product        = "IINT"
   property {
     key   = "summary"
@@ -803,6 +909,8 @@ resource "newrelic_workflow" "non_critical_browser_pageload" {
 ##########################
 
 resource "newrelic_notification_destination" "critical_browser" {
+  count = length(var.browser_monitors) > 0 ? 1 : 0
+
   name = "${pagerduty_service.critical["NewRelic"].name}-Browser"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
@@ -828,7 +936,7 @@ resource "newrelic_notification_channel" "critical_browser_pageload" {
 
   name           = "Browser-${each.key}-Critical-Pageload"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
-  destination_id = newrelic_notification_destination.critical_browser.id
+  destination_id = newrelic_notification_destination.critical_browser[0].id
   product        = "IINT"
   property {
     key   = "summary"
