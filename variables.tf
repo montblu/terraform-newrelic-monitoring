@@ -224,7 +224,7 @@ variable "cert_check_monitors" {
     name                                          = string
     type                                          = optional(string, "CERT_CHECK")
     domain                                        = string
-    locations_public                              = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
+    locations_public                              = optional(list(string), ["US_EAST_1", "EU_WEST_1", "EU_SOUTH_1"])
     certificate_expiration                        = optional(string, "10")
     period                                        = optional(string, "EVERY_DAY")
     status                                        = optional(string, "ENABLED")
