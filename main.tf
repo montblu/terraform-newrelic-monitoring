@@ -359,7 +359,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_duration_synthetics" {
     newrelic_synthetics_broken_links_monitor.broken_links[each.key].id}') FACET monitorName"
 
   }
-  critical {
+  warning {
     operator              = each.value["non_critical_duration_synthetics_operator"]
     threshold             = each.value["non_critical_duration_synthetics_threshold"]
     threshold_duration    = each.value["non_critical_duration_synthetics_threshold_duration"]
