@@ -83,6 +83,12 @@ variable "browser_monitors" {
     create_non_critical_browser_alert                      = optional(bool, false)
     critical_browser_pageload                              = optional(number, 7)
     non_critical_browser_pageload                          = optional(number, 3.5)
+    create_non_critical_apm_resources                      = optional(bool, false)
+    create_critical_apm_resources                          = optional(bool, false)
+    critical_response_time                                 = optional(number, 0.7)
+    non_critical_response_time                             = optional(number, 0.5)
+    critical_error_rate                                    = optional(number, 15)
+    non_critical_error_rate                                = optional(number, 7)
   }))
   default = {}
 }
@@ -124,6 +130,12 @@ variable "script_monitors" {
     non_critical_duration_synthetics_aggregation_window    = optional(number, 300)
     create_non_critical_monitor                            = optional(bool, false)
     create_critical_monitor                                = optional(bool, false)
+    create_non_critical_apm_resources                      = optional(bool, false)
+    create_critical_apm_resources                          = optional(bool, false)
+    critical_response_time                                 = optional(number, 0.7)
+    non_critical_response_time                             = optional(number, 0.5)
+    critical_error_rate                                    = optional(number, 15)
+    non_critical_error_rate                                = optional(number, 7)
     # SCRIPT_BROWSER only additional values
     enable_screenshot_on_failure_and_script = optional(bool, false)
     browsers                                = optional(list(string), ["CHROME", "FIREFOX"])
@@ -175,6 +187,12 @@ variable "step_monitors" {
     non_critical_duration_synthetics_aggregation_window    = optional(number, 300)
     create_non_critical_monitor                            = optional(bool, false)
     create_critical_monitor                                = optional(bool, false)
+    create_non_critical_apm_resources                      = optional(bool, false)
+    create_critical_apm_resources                          = optional(bool, false)
+    critical_response_time                                 = optional(number, 0.7)
+    non_critical_response_time                             = optional(number, 0.5)
+    critical_error_rate                                    = optional(number, 15)
+    non_critical_error_rate                                = optional(number, 7)
   }))
   default = {}
 }
@@ -215,6 +233,12 @@ variable "broken_links_monitors" {
     non_critical_duration_synthetics_aggregation_window    = optional(number, 300)
     create_non_critical_monitor                            = optional(bool, false)
     create_critical_monitor                                = optional(bool, false)
+    create_non_critical_apm_resources                      = optional(bool, false)
+    create_critical_apm_resources                          = optional(bool, false)
+    critical_response_time                                 = optional(number, 0.7)
+    non_critical_response_time                             = optional(number, 0.5)
+    critical_error_rate                                    = optional(number, 15)
+    non_critical_error_rate                                = optional(number, 7)
   }))
   default = {}
 }
@@ -244,6 +268,12 @@ variable "cert_check_monitors" {
     non_critical_synthetics_aggregation_window    = optional(number, 300)
     create_non_critical_monitor                   = optional(bool, false)
     create_critical_monitor                       = optional(bool, false)
+    create_non_critical_apm_resources             = optional(bool, false)
+    create_critical_apm_resources                 = optional(bool, false)
+    critical_response_time                        = optional(number, 0.7)
+    non_critical_response_time                    = optional(number, 0.5)
+    critical_error_rate                           = optional(number, 15)
+    non_critical_error_rate                       = optional(number, 7)
   }))
   default = {}
 }
