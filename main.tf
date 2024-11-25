@@ -13,8 +13,23 @@ locals {
     "Prometheus"
   ]
 
-  non_critical_apm_resources = { for key, value in var.simple_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_non_critical_apm_resources", false) }
-  critical_apm_resources     = { for key, value in var.simple_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_critical_apm_resources", false) }
+  non_critical_apm_resources = merge(
+    { for key, value in var.simple_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_non_critical_apm_resources, false) },
+    { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_non_critical_apm_resources, false) },
+    { for key, value in var.script_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_non_critical_apm_resources, false) },
+    { for key, value in var.step_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_non_critical_apm_resources, false) },
+    { for key, value in var.broken_links_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_non_critical_apm_resources, false) },
+    { for key, value in var.cert_check_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_non_critical_apm_resources, false) }
+  )
+
+  critical_apm_resources = merge(
+    { for key, value in var.simple_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_critical_apm_resources, false) },
+    { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_critical_apm_resources, false) },
+    { for key, value in var.script_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_critical_apm_resources, false) },
+    { for key, value in var.step_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_critical_apm_resources, false) },
+    { for key, value in var.broken_links_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_critical_apm_resources, false) },
+    { for key, value in var.cert_check_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_critical_apm_resources, false) }
+  )
 
   non_critical_browser_application_alert = { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_non_critical_browser_alert", false) }
   critical_browser_application_alert     = { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if lookup(value, "create_critical_browser_alert", false) }
@@ -413,7 +428,7 @@ resource "newrelic_alert_policy" "critical_apm_error_rate" {
 }
 
 resource "newrelic_notification_destination" "critical_apm" {
-  count = length(var.simple_monitors) > 0 ? 1 : 0
+  count = length(local.critical_apm_resources) > 0 ? 1 : 0
 
   name = "${pagerduty_service.critical["NewRelic"].name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -562,7 +577,7 @@ resource "newrelic_workflow" "critical_apm_error_rate" {
 
 
 resource "newrelic_notification_destination" "non_critical_apm" {
-  count = length(var.simple_monitors) > 0 ? 1 : 0
+  count = length(local.non_critical_apm_resources) > 0 ? 1 : 0
 
   name = "${pagerduty_service.non_critical["NewRelic"].name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
