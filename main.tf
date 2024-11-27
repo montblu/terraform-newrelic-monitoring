@@ -3,9 +3,9 @@ locals {
   nr_entity_suffix = var.newrelic_resource_name_suffix != "" ? format("-%s", var.newrelic_resource_name_suffix) : ""
 
   pagerduty_services = {
-    "NewRelic"     = { critical = true, non_critical = true, vendor = "New Relic" },
-    "Alertmanager" = { critical = true, non_critical = true, vendor = "Prometheus" },
-    "OpenSearch"   = { non_critical = true, api = true }
+    "NewRelic"     = { critical = var.critical_newrelic_pagerduty_service, non_critical = var.non_critical_newrelic_pagerduty_service, vendor = "New Relic" },
+    "Alertmanager" = { critical = var.critical_alertmanager_pagerduty_service, non_critical = var.non_critical_alertmanager_pagerduty_service, vendor = "Prometheus" },
+    "OpenSearch"   = { non_critical = var.non_critical_opensearch_pagerduty_service, api = true }
   }
 
   pagerduty_vendors = [
@@ -739,7 +739,7 @@ resource "newrelic_workflow" "non_critical_apm_error_rate" {
 ##########################
 
 resource "newrelic_notification_destination" "non_critical_browser" {
-  count = length(var.browser_monitors) > 0 ? 1 : 0
+  count = length(local.non_critical_browser_application_alert) > 0 ? 1 : 0
 
   name = "${pagerduty_service.non_critical["NewRelic"].name}-Browser"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -830,7 +830,7 @@ resource "newrelic_workflow" "non_critical_browser_pageload" {
 ##########################
 
 resource "newrelic_notification_destination" "critical_browser" {
-  count = length(var.browser_monitors) > 0 ? 1 : 0
+  count = length(local.critical_browser_application_alert) > 0 ? 1 : 0
 
   name = "${pagerduty_service.critical["NewRelic"].name}-Browser"
   type = "PAGERDUTY_SERVICE_INTEGRATION"

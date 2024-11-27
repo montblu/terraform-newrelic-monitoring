@@ -13,6 +13,30 @@ variable "newrelic_resource_name_suffix" {
   default = ""
 }
 
+variable "critical_alertmanager_pagerduty_service" {
+  type    = bool
+  default = false
+}
+variable "non_critical_alertmanager_pagerduty_service" {
+  type    = bool
+  default = false
+}
+
+variable "critical_newrelic_pagerduty_service" {
+  type    = bool
+  default = false
+}
+
+variable "non_critical_newrelic_pagerduty_service" {
+  type    = bool
+  default = false
+}
+
+variable "non_critical_opensearch_pagerduty_service" {
+  type    = bool
+  default = false
+}
+
 variable "simple_monitors" {
   type = map(object({
     name                                          = string
