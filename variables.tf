@@ -13,30 +13,6 @@ variable "newrelic_resource_name_suffix" {
   default = ""
 }
 
-variable "critical_alertmanager_pagerduty_service" {
-  type    = bool
-  default = false
-}
-variable "non_critical_alertmanager_pagerduty_service" {
-  type    = bool
-  default = false
-}
-
-variable "critical_newrelic_pagerduty_service" {
-  type    = bool
-  default = false
-}
-
-variable "non_critical_newrelic_pagerduty_service" {
-  type    = bool
-  default = false
-}
-
-variable "non_critical_opensearch_pagerduty_service" {
-  type    = bool
-  default = false
-}
-
 variable "simple_monitors" {
   type = map(object({
     name                                          = string
@@ -300,4 +276,35 @@ variable "cert_check_monitors" {
     non_critical_error_rate                       = optional(number, 7)
   }))
   default = {}
+}
+
+variable "pagerduty_services" {
+  type = map(object({
+    name         = optional(string)
+    critical     = optional(bool, false)
+    non_critical = optional(bool, false)
+    vendor       = optional(string)
+    api          = optional(bool, false)
+  }))
+  default = {
+    "NewRelic" = {
+      critical     = true,
+      non_critical = true,
+      vendor       = "New Relic"
+    },
+    "Alertmanager" = {
+      critical     = true,
+      non_critical = true,
+      vendor       = "Prometheus"
+    },
+    "OpenSearch" = {
+      non_critical = true,
+      api          = true
+    }
+  }
+}
+
+variable "pagerduty_vendors" {
+  type    = list(string)
+  default = ["New Relic", "Prometheus"]
 }

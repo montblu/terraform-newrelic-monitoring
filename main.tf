@@ -2,17 +2,6 @@ locals {
   nr_entity_prefix = var.newrelic_resource_name_prefix != "" ? format("%s-", var.newrelic_resource_name_prefix) : ""
   nr_entity_suffix = var.newrelic_resource_name_suffix != "" ? format("-%s", var.newrelic_resource_name_suffix) : ""
 
-  pagerduty_services = {
-    "NewRelic"     = { critical = var.critical_newrelic_pagerduty_service, non_critical = var.non_critical_newrelic_pagerduty_service, vendor = "New Relic" },
-    "Alertmanager" = { critical = var.critical_alertmanager_pagerduty_service, non_critical = var.non_critical_alertmanager_pagerduty_service, vendor = "Prometheus" },
-    "OpenSearch"   = { non_critical = var.non_critical_opensearch_pagerduty_service, api = true }
-  }
-
-  pagerduty_vendors = [
-    "New Relic",
-    "Prometheus"
-  ]
-
   non_critical_apm_resources = merge(
     { for key, value in var.simple_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_non_critical_apm_resources, false) },
     { for key, value in var.browser_monitors : "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" => value if coalesce(value.create_non_critical_apm_resources, false) },
@@ -52,7 +41,7 @@ data "newrelic_entity" "browser_application" {
 }
 
 data "pagerduty_vendor" "vendor" {
-  for_each = toset(local.pagerduty_vendors)
+  for_each = toset(var.pagerduty_vendors)
   name     = each.key
 }
 
@@ -924,7 +913,7 @@ resource "newrelic_workflow" "critical_browser_pageload" {
 resource "pagerduty_service" "critical" {
 
   for_each = {
-    for key, value in local.pagerduty_services : key => value
+    for key, value in var.pagerduty_services : key => value
     if lookup(value, "critical", false)
   }
 
@@ -943,7 +932,7 @@ resource "pagerduty_service" "critical" {
 resource "pagerduty_service_integration" "critical" {
 
   for_each = {
-    for key, value in local.pagerduty_services : key => value
+    for key, value in var.pagerduty_services : key => value
     if lookup(value, "critical", false) && !lookup(value, "api", false)
   }
 
@@ -955,7 +944,7 @@ resource "pagerduty_service_integration" "critical" {
 resource "pagerduty_service" "non_critical" {
 
   for_each = {
-    for key, value in local.pagerduty_services : key => value
+    for key, value in var.pagerduty_services : key => value
     if lookup(value, "non_critical", false)
   }
 
@@ -974,7 +963,7 @@ resource "pagerduty_service" "non_critical" {
 resource "pagerduty_service_integration" "non_critical" {
 
   for_each = {
-    for key, value in local.pagerduty_services : key => value
+    for key, value in var.pagerduty_services : key => value
     if lookup(value, "non_critical", false) && !lookup(value, "api", false)
   }
 
@@ -986,7 +975,7 @@ resource "pagerduty_service_integration" "non_critical" {
 resource "pagerduty_service_integration" "non_critical_events_API_v2" {
 
   for_each = {
-    for key, value in local.pagerduty_services : key => value
+    for key, value in var.pagerduty_services : key => value
     if lookup(value, "non_critical", false) && lookup(value, "api", false)
   }
 
