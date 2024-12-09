@@ -56,8 +56,8 @@ No modules.
 | [newrelic_nrql_alert_condition.noncritical_health_synthetics](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
 | [newrelic_synthetics_broken_links_monitor.broken_links](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_broken_links_monitor) | resource |
 | [newrelic_synthetics_cert_check_monitor.cert_check](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_cert_check_monitor) | resource |
-| [newrelic_synthetics_monitor.all](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_monitor) | resource |
 | [newrelic_synthetics_monitor.browser](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_monitor) | resource |
+| [newrelic_synthetics_monitor.simple](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_monitor) | resource |
 | [newrelic_synthetics_script_monitor.script](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_script_monitor) | resource |
 | [newrelic_synthetics_step_monitor.step](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_step_monitor) | resource |
 | [newrelic_workflow.critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
