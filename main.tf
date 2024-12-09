@@ -6,7 +6,7 @@ locals {
 
   all_monitor_resources = merge(newrelic_synthetics_monitor.simple, newrelic_synthetics_script_monitor.script, newrelic_synthetics_step_monitor.step, newrelic_synthetics_broken_links_monitor.broken_links, newrelic_synthetics_cert_check_monitor.cert_check)
 
-  # constructs the name string for each monitor in a single space to avoid repetition.
+  # constructs the name string for each monitor in a single location to avoid repetition.
   prefix_suffix_map = {for key, _ in local.all_monitors: key => "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}"}
 
 }
