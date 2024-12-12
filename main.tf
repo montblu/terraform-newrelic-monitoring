@@ -7,12 +7,12 @@ locals {
   all_monitor_resources = merge(newrelic_synthetics_monitor.simple, newrelic_synthetics_script_monitor.script, newrelic_synthetics_step_monitor.step, newrelic_synthetics_broken_links_monitor.broken_links, newrelic_synthetics_cert_check_monitor.cert_check)
 
   # constructs the name string for each monitor in a single location to avoid repetition.
-  prefix_suffix_map = {for key, _ in local.all_monitors: key => "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}"}
+  prefix_suffix_map = { for key, _ in local.all_monitors : key => "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" }
 
 }
 
 data "newrelic_entity" "this" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_non_critical_apm_resources || var.create_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources || value.create_critical_apm_resources }
 
   name   = local.prefix_suffix_map[each.key]
   domain = "APM"
@@ -20,7 +20,7 @@ data "newrelic_entity" "this" {
 }
 
 data "newrelic_entity" "browser_application" {
-  for_each = {for key, value in var.browser_monitors: key => value if var.create_non_critical_browser_alert || var.create_critical_browser_alert}
+  for_each = { for key, value in var.browser_monitors : key => value if value.create_non_critical_browser_alert || value.create_critical_browser_alert }
 
   name   = local.prefix_suffix_map[each.key]
   domain = "BROWSER"
@@ -371,14 +371,14 @@ resource "pagerduty_service_integration" "synthetics_newrelic" {
 ##########################
 
 resource "newrelic_alert_policy" "critical_apm_response_time" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
   name                = "APM-${local.prefix_suffix_map[each.key]}-response-time-Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_alert_policy" "critical_apm_error_rate" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
   name                = "APM-${local.prefix_suffix_map[each.key]}-error-rate-Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
@@ -386,7 +386,7 @@ resource "newrelic_alert_policy" "critical_apm_error_rate" {
 
 resource "newrelic_notification_destination" "critical_apm" {
   # we create only one
-  count = length({for key, value in local.all_monitors: key => value if var.create_critical_apm_resources}) > 0 ? 1 : 0
+  count = length({ for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }) > 0 ? 1 : 0
 
   name = "${pagerduty_service.critical["NewRelic"].name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -402,7 +402,7 @@ resource "newrelic_notification_destination" "critical_apm" {
 }
 
 resource "newrelic_notification_channel" "critical_apm_response_time" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
   name           = "APM-${local.prefix_suffix_map[each.key]}-response-time-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -424,7 +424,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
 }
 
 resource "newrelic_notification_channel" "critical_apm_error_rate" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
   name           = "APM-${local.prefix_suffix_map[each.key]}-error-rate-Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -446,7 +446,7 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
 }
 
 resource "newrelic_nrql_alert_condition" "critical_response_time" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.critical_apm_response_time[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Critical-response-time"
@@ -465,7 +465,7 @@ resource "newrelic_nrql_alert_condition" "critical_response_time" {
 }
 
 resource "newrelic_nrql_alert_condition" "critical_error_rate" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.critical_apm_error_rate[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
@@ -484,7 +484,7 @@ resource "newrelic_nrql_alert_condition" "critical_error_rate" {
 }
 
 resource "newrelic_workflow" "critical_apm_response_time" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Critical-response-time"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -506,7 +506,7 @@ resource "newrelic_workflow" "critical_apm_response_time" {
 }
 
 resource "newrelic_workflow" "critical_apm_error_rate" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -535,7 +535,7 @@ resource "newrelic_workflow" "critical_apm_error_rate" {
 
 
 resource "newrelic_notification_destination" "non_critical_apm" {
-  count = length({for key, value in local.all_monitors: key => value if var.create_non_critical_apm_resources}) > 0 ? 1 : 0
+  count = length({ for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }) > 0 ? 1 : 0
 
   name = "${pagerduty_service.non_critical["NewRelic"].name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -551,21 +551,21 @@ resource "newrelic_notification_destination" "non_critical_apm" {
 }
 
 resource "newrelic_alert_policy" "non_critical_apm_response_time" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_non_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
   name                = "APM-${local.prefix_suffix_map[each.key]}-response-time-Non_Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_alert_policy" "non_critical_apm_error_rate" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_non_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
   name                = "APM-${local.prefix_suffix_map[each.key]}-error-rate-Non_Critical"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_notification_channel" "non_critical_apm_response_time" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_non_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
   name           = "APM-${local.prefix_suffix_map[each.key]}-response-time-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -588,7 +588,7 @@ resource "newrelic_notification_channel" "non_critical_apm_response_time" {
 }
 
 resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_non_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
   name           = "APM-${local.prefix_suffix_map[each.key]}-error-rate-Non_Critical"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -609,7 +609,7 @@ resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
 }
 
 resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_non_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.non_critical_apm_response_time[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Non_Critical-response-time"
@@ -628,7 +628,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
 }
 
 resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_non_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.non_critical_apm_error_rate[each.key].id
   name        = "${data.newrelic_entity.this[each.key].name}-Non_Critical-error-rate"
@@ -647,7 +647,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
 }
 
 resource "newrelic_workflow" "non_critical_apm_response_time" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_non_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Non_Critical-response-time"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -669,7 +669,7 @@ resource "newrelic_workflow" "non_critical_apm_response_time" {
 }
 
 resource "newrelic_workflow" "non_critical_apm_error_rate" {
-  for_each = {for key, value in local.all_monitors: key => value if var.create_non_critical_apm_resources}
+  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
   name                  = "APM-${data.newrelic_entity.this[each.key].name}-Non_Critical-error-rate"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -697,7 +697,7 @@ resource "newrelic_workflow" "non_critical_apm_error_rate" {
 ##########################
 
 resource "newrelic_notification_destination" "non_critical_browser" {
-  count = length({for key, value in var.browser_monitors: key => value if var.create_non_critical_browser_alert}) > 0 ? 1 : 0
+  count = length({ for key, value in var.browser_monitors : key => value if value.create_non_critical_browser_alert }) > 0 ? 1 : 0
 
   name = "${pagerduty_service.non_critical["NewRelic"].name}-Browser"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -713,14 +713,14 @@ resource "newrelic_notification_destination" "non_critical_browser" {
 }
 
 resource "newrelic_alert_policy" "non_critical_browser_pageload" {
-  for_each = {for key, value in var.browser_monitors: key => value if var.create_non_critical_browser_alert}
+  for_each = { for key, value in var.browser_monitors : key => value if value.create_non_critical_browser_alert }
 
   name                = "Browser-${local.prefix_suffix_map[each.key]}-Non-Critical-Pageload"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_notification_channel" "non_critical_browser_pageload" {
-  for_each = {for key, value in var.browser_monitors: key => value if var.create_non_critical_browser_alert}
+  for_each = { for key, value in var.browser_monitors : key => value if value.create_non_critical_browser_alert }
 
   name           = "Browser-${local.prefix_suffix_map[each.key]}-Non-Critical-Pageload"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -741,7 +741,7 @@ resource "newrelic_notification_channel" "non_critical_browser_pageload" {
 }
 
 resource "newrelic_nrql_alert_condition" "non_critical_browser_pageload" {
-  for_each = {for key, value in var.browser_monitors: key => value if var.create_non_critical_browser_alert}
+  for_each = { for key, value in var.browser_monitors : key => value if value.create_non_critical_browser_alert }
 
   policy_id   = newrelic_alert_policy.non_critical_browser_pageload[each.key].id
   name        = "${data.newrelic_entity.browser_application[each.key].name}-Non-Critical-Browser-Pageload"
@@ -760,7 +760,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_browser_pageload" {
 }
 
 resource "newrelic_workflow" "non_critical_browser_pageload" {
-  for_each = {for key, value in var.browser_monitors: key => value if var.create_non_critical_browser_alert}
+  for_each = { for key, value in var.browser_monitors : key => value if value.create_non_critical_browser_alert }
 
   name                  = "${data.newrelic_entity.browser_application[each.key].name}-Non-Critical-Browser-Pageload"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -788,7 +788,7 @@ resource "newrelic_workflow" "non_critical_browser_pageload" {
 ##########################
 
 resource "newrelic_notification_destination" "critical_browser" {
-  count = length({for key, value in var.browser_monitors: key => value if var.create_critical_browser_alert}) > 0 ? 1 : 0
+  count = length({ for key, value in var.browser_monitors : key => value if value.create_critical_browser_alert }) > 0 ? 1 : 0
 
   name = "${pagerduty_service.critical["NewRelic"].name}-Browser"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -804,14 +804,14 @@ resource "newrelic_notification_destination" "critical_browser" {
 }
 
 resource "newrelic_alert_policy" "critical_browser_pageload" {
-  for_each = {for key, value in var.browser_monitors: key => value if var.create_critical_browser_alert}
+  for_each = { for key, value in var.browser_monitors : key => value if value.create_critical_browser_alert }
 
   name                = "Browser-${local.prefix_suffix_map[each.key]}-Critical-Pageload"
   incident_preference = "PER_CONDITION_AND_TARGET"
 }
 
 resource "newrelic_notification_channel" "critical_browser_pageload" {
-  for_each = {for key, value in var.browser_monitors: key => value if var.create_critical_browser_alert}
+  for_each = { for key, value in var.browser_monitors : key => value if value.create_critical_browser_alert }
 
   name           = "Browser-${local.prefix_suffix_map[each.key]}-Critical-Pageload"
   type           = "PAGERDUTY_SERVICE_INTEGRATION"
@@ -832,7 +832,7 @@ resource "newrelic_notification_channel" "critical_browser_pageload" {
 }
 
 resource "newrelic_nrql_alert_condition" "critical_browser_pageload" {
-  for_each = {for key, value in var.browser_monitors: key => value if var.create_critical_browser_alert}
+  for_each = { for key, value in var.browser_monitors : key => value if value.create_critical_browser_alert }
 
   policy_id   = newrelic_alert_policy.critical_browser_pageload[each.key].id
   name        = "${data.newrelic_entity.browser_application[each.key].name}-Critical-Browser-Pageload"
@@ -851,7 +851,7 @@ resource "newrelic_nrql_alert_condition" "critical_browser_pageload" {
 }
 
 resource "newrelic_workflow" "critical_browser_pageload" {
-  for_each = {for key, value in var.browser_monitors: key => value if var.create_critical_browser_alert}
+  for_each = { for key, value in var.browser_monitors : key => value if value.create_critical_browser_alert }
 
   name                  = "${data.newrelic_entity.browser_application[each.key].name}-Critical-Browser-Pageload"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
