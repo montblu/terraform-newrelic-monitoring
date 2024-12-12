@@ -4,7 +4,7 @@ terraform {
   required_providers {
     newrelic = {
       source  = "newrelic/newrelic"
-      version = "3.27.7"
+      version = "3.52.0"
     }
 
     pagerduty = {
