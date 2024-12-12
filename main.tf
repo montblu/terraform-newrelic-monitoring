@@ -257,7 +257,7 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
 
 # Critical duration alert condition
 resource "newrelic_nrql_alert_condition" "critical_duration_synthetics" {
-  for_each = { for key, value in local.all_monitors : key => value if value.create_critical_monitor }
+  for_each = { for key, value in local.all_monitors : key => value if value.create_critical_duration_monitor }
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${local.prefix_suffix_map[each.key]}-Critical-monitor-duration"
@@ -312,7 +312,7 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
 
 # Non critical duration alert
 resource "newrelic_nrql_alert_condition" "non_critical_duration_synthetics" {
-  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_monitor }
+  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_duration_monitor }
 
   policy_id   = newrelic_alert_policy.synthetics[each.key].id
   name        = "${local.prefix_suffix_map[each.key]}-Non-Critical-monitor-duration"
