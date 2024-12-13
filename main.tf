@@ -952,3 +952,144 @@ resource "pagerduty_service_integration" "non_critical_events_API_v2" {
   service = pagerduty_service.non_critical[each.key].id
   type    = "events_api_v2_inbound_integration"
 }
+
+##########################
+
+# NewRelic Paid Synthetics Checks Alert
+
+##########################
+
+resource "newrelic_alert_policy" "synthetics_checks_alert" {
+  count = var.synthetics_checks_alert ? 1 : 0
+
+  name                = "Synthetics-Checks-Alert"
+  incident_preference = "PER_CONDITION_AND_TARGET"
+}
+
+resource "newrelic_nrql_alert_condition" "synthetics_checks_alert" {
+  count = var.synthetics_checks_alert ? 1 : 0
+
+  policy_id = newrelic_alert_policy.synthetics_checks_alert[0].id
+  name      = "Synthetics Checks Alert"
+  enabled   = true
+
+  nrql {
+    query = "SELECT (sum(syntheticsFailedCheckCount) + sum(syntheticsSuccessCheckCount)) AS 'Total Checks' FROM NrDailyUsage WHERE syntheticsTypeLabel != 'Ping' SINCE this month"
+  }
+
+  critical {
+    operator              = "above_or_equals"
+    threshold             = 9500
+    threshold_duration    = 300
+    threshold_occurrences = "at_least_once"
+  }
+
+  warning {
+    operator              = "above_or_equals"
+    threshold             = 8000
+    threshold_duration    = 300
+    threshold_occurrences = "at_least_once"
+  }
+}
+
+resource "newrelic_workflow" "critical_synthetics_checks_alert" {
+  count = var.synthetics_checks_alert ? 1 : 0
+
+  name                  = "Critical-Synthetics-Checks-Alert"
+  muting_rules_handling = "NOTIFY_ALL_ISSUES"
+
+  issues_filter {
+    name = "workflow-filter"
+    type = "FILTER"
+
+    predicate {
+      attribute = "labels.policyIds"
+      operator  = "EXACTLY_MATCHES"
+      values    = [newrelic_alert_policy.synthetics_checks_alert[0].id]
+    }
+  }
+  destination {
+    channel_id            = newrelic_notification_channel.critical_synthetics_checks_alert[0].id
+    notification_triggers = ["ACTIVATED", "CLOSED"]
+  }
+}
+
+resource "newrelic_notification_channel" "critical_synthetics_checks_alert" {
+  count = var.synthetics_checks_alert ? 1 : 0
+
+  name           = "Synthetics Checks Alert"
+  type           = "PAGERDUTY_SERVICE_INTEGRATION"
+  destination_id = newrelic_notification_destination.synthetics_checks_alert[0].id
+  product        = "IINT"
+  property {
+    key   = "summary"
+    value = "Synthetics checks > ${newrelic_nrql_alert_condition.synthetics_checks_alert[0].critical[0].threshold}"
+  }
+  property {
+    key   = "policy_id"
+    value = newrelic_alert_policy.synthetics_checks_alert[0].id
+  }
+  property {
+    key   = "service_key"
+    value = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+  }
+}
+
+resource "newrelic_notification_destination" "synthetics_checks_alert" {
+  count = var.synthetics_checks_alert ? 1 : 0
+
+  name = "${pagerduty_service.non_critical["NewRelic"].name}-sythetics-checks"
+  type = "PAGERDUTY_SERVICE_INTEGRATION"
+
+  property {
+    key   = ""
+    value = ""
+  }
+  auth_token {
+    prefix = "service-integration-id"
+    token  = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+  }
+}
+
+resource "newrelic_workflow" "non_critical_synthetics_checks_alert" {
+  count = var.synthetics_checks_alert ? 1 : 0
+
+  name                  = "Non-Critical-Synthetics-Checks-Alert"
+  muting_rules_handling = "NOTIFY_ALL_ISSUES"
+
+  issues_filter {
+    name = "workflow-filter"
+    type = "FILTER"
+
+    predicate {
+      attribute = "labels.policyIds"
+      operator  = "EXACTLY_MATCHES"
+      values    = [newrelic_alert_policy.synthetics_checks_alert[0].id]
+    }
+  }
+  destination {
+    channel_id            = newrelic_notification_channel.non_critical_synthetics_checks_alert[0].id
+    notification_triggers = ["ACTIVATED", "CLOSED"]
+  }
+}
+
+resource "newrelic_notification_channel" "non_critical_synthetics_checks_alert" {
+  count = var.synthetics_checks_alert ? 1 : 0
+
+  name           = "Synthetics Checks Alert"
+  type           = "PAGERDUTY_SERVICE_INTEGRATION"
+  destination_id = newrelic_notification_destination.synthetics_checks_alert[0].id
+  product        = "IINT"
+  property {
+    key   = "summary"
+    value = "Synthetics checks > ${newrelic_nrql_alert_condition.synthetics_checks_alert[0].warning[0].threshold}"
+  }
+  property {
+    key   = "policy_id"
+    value = newrelic_alert_policy.synthetics_checks_alert[0].id
+  }
+  property {
+    key   = "service_key"
+    value = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+  }
+}
