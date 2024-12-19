@@ -13,11 +13,6 @@ variable "newrelic_resource_name_suffix" {
   default = ""
 }
 
-variable "synthetics_checks_alert" {
-  type    = bool
-  default = false
-}
-
 variable "simple_monitors" {
   type = map(object({
     name                                                   = string
