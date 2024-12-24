@@ -11,21 +11,21 @@ locals {
 
 
   non_critical_apm_resources = merge(
-    { for key, value in var.simple_monitors : "${key}" => value if coalesce(value.create_non_critical_apm_resources, false) },
-    { for key, value in var.browser_monitors : "${key}" => value if coalesce(value.create_non_critical_apm_resources, false) },
-    { for key, value in var.script_monitors : "${key}" => value if coalesce(value.create_non_critical_apm_resources, false) },
-    { for key, value in var.step_monitors : "${key}" => value if coalesce(value.create_non_critical_apm_resources, false) },
-    { for key, value in var.broken_links_monitors : "${key}" => value if coalesce(value.create_non_critical_apm_resources, false) },
-    { for key, value in var.cert_check_monitors : "${key}" => value if coalesce(value.create_non_critical_apm_resources, false) }
+    { for key, value in var.simple_monitors : "${key}" => value if value.create_non_critical_apm_resources },
+    { for key, value in var.browser_monitors : "${key}" => value if value.create_non_critical_apm_resources },
+    { for key, value in var.script_monitors : "${key}" => value if value.create_non_critical_apm_resources },
+    { for key, value in var.step_monitors : "${key}" => value if value.create_non_critical_apm_resources },
+    { for key, value in var.broken_links_monitors : "${key}" => value if value.create_non_critical_apm_resources },
+    { for key, value in var.cert_check_monitors : "${key}" => value if value.create_non_critical_apm_resources }
   )
 
   critical_apm_resources = merge(
-    { for key, value in var.simple_monitors : "${key}" => value if coalesce(value.create_critical_apm_resources, false) },
-    { for key, value in var.browser_monitors : "${key}" => value if coalesce(value.create_critical_apm_resources, false) },
-    { for key, value in var.script_monitors : "${key}" => value if coalesce(value.create_critical_apm_resources, false) },
-    { for key, value in var.step_monitors : "${key}" => value if coalesce(value.create_critical_apm_resources, false) },
-    { for key, value in var.broken_links_monitors : "${key}" => value if coalesce(value.create_critical_apm_resources, false) },
-    { for key, value in var.cert_check_monitors : "${key}" => value if coalesce(value.create_critical_apm_resources, false) }
+    { for key, value in var.simple_monitors : "${key}" => value if value.create_critical_apm_resources },
+    { for key, value in var.browser_monitors : "${key}" => value if value.create_critical_apm_resources },
+    { for key, value in var.script_monitors : "${key}" => value if value.create_critical_apm_resources },
+    { for key, value in var.step_monitors : "${key}" => value if value.create_critical_apm_resources },
+    { for key, value in var.broken_links_monitors : "${key}" => value if value.create_critical_apm_resources },
+    { for key, value in var.cert_check_monitors : "${key}" => value if value.create_critical_apm_resources }
   )
 }
 
