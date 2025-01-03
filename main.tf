@@ -11,18 +11,18 @@ locals {
 
 }
 
-data "newrelic_entity" "this" {
+data "newrelic_entity" "apm_entities" {
   for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources || value.create_critical_apm_resources }
 
-  name   = local.prefix_suffix_map[each.key]
+  name   = each.value["apm_nr_entity"]
   domain = "APM"
   type   = "APPLICATION"
 }
 
-data "newrelic_entity" "browser_application" {
+data "newrelic_entity" "browser_entities" {
   for_each = { for key, value in var.browser_monitors : key => value if value.create_non_critical_browser_alert || value.create_critical_browser_alert }
 
-  name   = local.prefix_suffix_map[each.key]
+  name   = each.value["browser_nr_entity"]
   domain = "BROWSER"
   type   = "APPLICATION"
 }
@@ -411,7 +411,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
 
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.critical_response_time[each.key].description} > ${newrelic_nrql_alert_condition.critical_response_time[each.key].critical[0].threshold} seconds"
+    value = "APM Service ${data.newrelic_entity.apm_entities[each.key].name} ${newrelic_nrql_alert_condition.critical_response_time[each.key].description} > ${newrelic_nrql_alert_condition.critical_response_time[each.key].critical[0].threshold} seconds"
   }
   property {
     key   = "policy_id"
@@ -433,7 +433,7 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
 
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.critical_error_rate[each.key].description} > ${newrelic_nrql_alert_condition.critical_error_rate[each.key].critical[0].threshold}%"
+    value = "APM Service ${data.newrelic_entity.apm_entities[each.key].name} ${newrelic_nrql_alert_condition.critical_error_rate[each.key].description} > ${newrelic_nrql_alert_condition.critical_error_rate[each.key].critical[0].threshold}%"
   }
   property {
     key   = "policy_id"
@@ -449,12 +449,12 @@ resource "newrelic_nrql_alert_condition" "critical_response_time" {
   for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.critical_apm_response_time[each.key].id
-  name        = "${data.newrelic_entity.this[each.key].name}-Critical-response-time"
+  name        = "${data.newrelic_entity.apm_entities[each.key].name}-Critical-response-time"
   description = "response-time"
   enabled     = true
 
   nrql {
-    query = "SELECT average(duration) FROM Transaction where appName = '${data.newrelic_entity.this[each.key].name}'"
+    query = "SELECT average(duration) FROM Transaction where appName = '${data.newrelic_entity.apm_entities[each.key].name}'"
   }
   critical {
     operator              = "above_or_equals"
@@ -468,12 +468,12 @@ resource "newrelic_nrql_alert_condition" "critical_error_rate" {
   for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.critical_apm_error_rate[each.key].id
-  name        = "${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
+  name        = "${data.newrelic_entity.apm_entities[each.key].name}-Critical-error-rate"
   description = "error-rate"
   enabled     = true
 
   nrql {
-    query = "SELECT (sum(apm.service.error.count['count']) / count(apm.service.transaction.duration)) * 100 AS 'All errors' FROM Metric WHERE (appName = '${data.newrelic_entity.this[each.key].name}')"
+    query = "SELECT (sum(apm.service.error.count['count']) / count(apm.service.transaction.duration)) * 100 AS 'All errors' FROM Metric WHERE (appName = '${data.newrelic_entity.apm_entities[each.key].name}')"
   }
   critical {
     operator              = "above_or_equals"
@@ -486,7 +486,7 @@ resource "newrelic_nrql_alert_condition" "critical_error_rate" {
 resource "newrelic_workflow" "critical_apm_response_time" {
   for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
-  name                  = "APM-${data.newrelic_entity.this[each.key].name}-Critical-response-time"
+  name                  = "APM-${data.newrelic_entity.apm_entities[each.key].name}-Critical-response-time"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
 
   issues_filter {
@@ -508,7 +508,7 @@ resource "newrelic_workflow" "critical_apm_response_time" {
 resource "newrelic_workflow" "critical_apm_error_rate" {
   for_each = { for key, value in local.all_monitors : key => value if value.create_critical_apm_resources }
 
-  name                  = "APM-${data.newrelic_entity.this[each.key].name}-Critical-error-rate"
+  name                  = "APM-${data.newrelic_entity.apm_entities[each.key].name}-Critical-error-rate"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
 
   issues_filter {
@@ -574,7 +574,7 @@ resource "newrelic_notification_channel" "non_critical_apm_response_time" {
 
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].warning[0].threshold} seconds"
+    value = "APM Service ${data.newrelic_entity.apm_entities[each.key].name} ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_response_time[each.key].warning[0].threshold} seconds"
   }
 
   property {
@@ -596,7 +596,7 @@ resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
   product        = "IINT"
   property {
     key   = "summary"
-    value = "APM Service ${data.newrelic_entity.this[each.key].name} ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].warning[0].threshold}%"
+    value = "APM Service ${data.newrelic_entity.apm_entities[each.key].name} ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_error_rate[each.key].warning[0].threshold}%"
   }
   property {
     key   = "policy_id"
@@ -612,12 +612,12 @@ resource "newrelic_nrql_alert_condition" "non_critical_response_time" {
   for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.non_critical_apm_response_time[each.key].id
-  name        = "${data.newrelic_entity.this[each.key].name}-Non_Critical-response-time"
+  name        = "${data.newrelic_entity.apm_entities[each.key].name}-Non_Critical-response-time"
   description = "response-time"
   enabled     = true
 
   nrql {
-    query = "SELECT average(duration) FROM Transaction where appName = '${data.newrelic_entity.this[each.key].name}'"
+    query = "SELECT average(duration) FROM Transaction where appName = '${data.newrelic_entity.apm_entities[each.key].name}'"
   }
   warning {
     operator              = "above_or_equals"
@@ -631,12 +631,12 @@ resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
   for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
   policy_id   = newrelic_alert_policy.non_critical_apm_error_rate[each.key].id
-  name        = "${data.newrelic_entity.this[each.key].name}-Non_Critical-error-rate"
+  name        = "${data.newrelic_entity.apm_entities[each.key].name}-Non_Critical-error-rate"
   description = "error-rate"
   enabled     = true
 
   nrql {
-    query = "SELECT (sum(apm.service.error.count['count']) / count(apm.service.transaction.duration)) * 100 AS 'All errors' FROM Metric WHERE (appName = '${data.newrelic_entity.this[each.key].name}')"
+    query = "SELECT (sum(apm.service.error.count['count']) / count(apm.service.transaction.duration)) * 100 AS 'All errors' FROM Metric WHERE (appName = '${data.newrelic_entity.apm_entities[each.key].name}')"
   }
   warning {
     operator              = "above_or_equals"
@@ -649,7 +649,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_error_rate" {
 resource "newrelic_workflow" "non_critical_apm_response_time" {
   for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
-  name                  = "APM-${data.newrelic_entity.this[each.key].name}-Non_Critical-response-time"
+  name                  = "APM-${data.newrelic_entity.apm_entities[each.key].name}-Non_Critical-response-time"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
 
   issues_filter {
@@ -671,7 +671,7 @@ resource "newrelic_workflow" "non_critical_apm_response_time" {
 resource "newrelic_workflow" "non_critical_apm_error_rate" {
   for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_apm_resources }
 
-  name                  = "APM-${data.newrelic_entity.this[each.key].name}-Non_Critical-error-rate"
+  name                  = "APM-${data.newrelic_entity.apm_entities[each.key].name}-Non_Critical-error-rate"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
 
   issues_filter {
@@ -728,7 +728,7 @@ resource "newrelic_notification_channel" "non_critical_browser_pageload" {
   product        = "IINT"
   property {
     key   = "summary"
-    value = "Browser Service ${data.newrelic_entity.browser_application[each.key].name} ${newrelic_nrql_alert_condition.non_critical_browser_pageload[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_browser_pageload[each.key].warning[0].threshold}seconds"
+    value = "Browser Service ${data.newrelic_entity.browser_entities[each.key].name} ${newrelic_nrql_alert_condition.non_critical_browser_pageload[each.key].description} > ${newrelic_nrql_alert_condition.non_critical_browser_pageload[each.key].warning[0].threshold}seconds"
   }
   property {
     key   = "policy_id"
@@ -744,12 +744,12 @@ resource "newrelic_nrql_alert_condition" "non_critical_browser_pageload" {
   for_each = { for key, value in var.browser_monitors : key => value if value.create_non_critical_browser_alert }
 
   policy_id   = newrelic_alert_policy.non_critical_browser_pageload[each.key].id
-  name        = "${data.newrelic_entity.browser_application[each.key].name}-Non-Critical-Browser-Pageload"
+  name        = "${data.newrelic_entity.browser_entities[each.key].name}-Non-Critical-Browser-Pageload"
   description = "average pageload time"
   enabled     = true
 
   nrql {
-    query = "SELECT average(duration) FROM PageView WHERE entityGuid IN ('${data.newrelic_entity.browser_application[each.key].guid}') FACET appName"
+    query = "SELECT average(duration) FROM PageView WHERE entityGuid IN ('${data.newrelic_entity.browser_entities[each.value.name].guid}') FACET appName"
   }
   warning {
     operator              = "above_or_equals"
@@ -762,7 +762,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_browser_pageload" {
 resource "newrelic_workflow" "non_critical_browser_pageload" {
   for_each = { for key, value in var.browser_monitors : key => value if value.create_non_critical_browser_alert }
 
-  name                  = "${data.newrelic_entity.browser_application[each.key].name}-Non-Critical-Browser-Pageload"
+  name                  = "${data.newrelic_entity.browser_entities[each.key].name}-Non-Critical-Browser-Pageload"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
 
   issues_filter {
@@ -819,7 +819,7 @@ resource "newrelic_notification_channel" "critical_browser_pageload" {
   product        = "IINT"
   property {
     key   = "summary"
-    value = "Browser Service ${data.newrelic_entity.browser_application[each.key].name} ${newrelic_nrql_alert_condition.critical_browser_pageload[each.key].description} > ${newrelic_nrql_alert_condition.critical_browser_pageload[each.key].critical[0].threshold}seconds"
+    value = "Browser Service ${data.newrelic_entity.browser_entities[each.key].name} ${newrelic_nrql_alert_condition.critical_browser_pageload[each.key].description} > ${newrelic_nrql_alert_condition.critical_browser_pageload[each.key].critical[0].threshold}seconds"
   }
   property {
     key   = "policy_id"
@@ -835,12 +835,12 @@ resource "newrelic_nrql_alert_condition" "critical_browser_pageload" {
   for_each = { for key, value in var.browser_monitors : key => value if value.create_critical_browser_alert }
 
   policy_id   = newrelic_alert_policy.critical_browser_pageload[each.key].id
-  name        = "${data.newrelic_entity.browser_application[each.key].name}-Critical-Browser-Pageload"
+  name        = "${data.newrelic_entity.browser_entities[each.key].name}-Critical-Browser-Pageload"
   description = "average pageload time"
   enabled     = true
 
   nrql {
-    query = "SELECT average(duration) FROM PageView WHERE entityGuid IN ('${data.newrelic_entity.browser_application[each.key].guid}') FACET appName"
+    query = "SELECT average(duration) FROM PageView WHERE entityGuid IN ('${data.newrelic_entity.browser_entities[each.key].guid}') FACET appName"
   }
   critical {
     operator              = "above_or_equals"
@@ -853,7 +853,7 @@ resource "newrelic_nrql_alert_condition" "critical_browser_pageload" {
 resource "newrelic_workflow" "critical_browser_pageload" {
   for_each = { for key, value in var.browser_monitors : key => value if value.create_critical_browser_alert }
 
-  name                  = "${data.newrelic_entity.browser_application[each.key].name}-Critical-Browser-Pageload"
+  name                  = "${data.newrelic_entity.browser_entities[each.key].name}-Critical-Browser-Pageload"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
 
   issues_filter {
