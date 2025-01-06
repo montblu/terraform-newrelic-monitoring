@@ -13,11 +13,21 @@ variable "newrelic_resource_name_suffix" {
   default = ""
 }
 
+variable "newrelic_apm_entities" {
+  type    = list(string)
+  default = []
+}
+
+variable "newrelic_browser_entities" {
+  type    = list(string)
+  default = []
+}
+
 variable "simple_monitors" {
   type = map(object({
     name                                                   = string
     uri                                                    = string
-    apm_nr_entity                                          = optional(string, "")
+    nr_entity                                              = optional(string, "")
     type                                                   = optional(string, "SIMPLE")
     period                                                 = optional(string, "EVERY_5_MINUTES")
     status                                                 = optional(string, "ENABLED")
@@ -68,8 +78,7 @@ variable "browser_monitors" {
   type = map(object({
     name                                                   = string
     uri                                                    = string
-    apm_nr_entity                                          = optional(string, "")
-    browser_nr_entity                                      = optional(string, "")
+    nr_entity                                              = optional(string, "")
     type                                                   = optional(string, "BROWSER")
     period                                                 = optional(string, "EVERY_5_MINUTES")
     status                                                 = optional(string, "ENABLED")
@@ -127,7 +136,7 @@ variable "browser_monitors" {
 variable "script_monitors" {
   type = map(object({
     name                                                   = string
-    apm_nr_entity                                          = optional(string, "")
+    nr_entity                                              = optional(string, "")
     type                                                   = optional(string, "SCRIPT_API") # SCRIPT_API or SCRIPT_BROWSER
     status                                                 = optional(string, "ENABLED")
     locations_public                                       = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
@@ -181,7 +190,7 @@ variable "script_monitors" {
 variable "step_monitors" {
   type = map(object({
     name                                    = string
-    apm_nr_entity                           = optional(string, "")
+    nr_entity                               = optional(string, "")
     type                                    = optional(string, "STEP")
     enable_screenshot_on_failure_and_script = optional(bool, false)
     locations_public                        = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
@@ -237,7 +246,7 @@ variable "step_monitors" {
 variable "broken_links_monitors" {
   type = map(object({
     name                                                   = string
-    apm_nr_entity                                          = optional(string, "")
+    nr_entity                                              = optional(string, "")
     type                                                   = optional(string, "BROKEN_LINKS")
     uri                                                    = string
     locations_public                                       = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
@@ -286,7 +295,7 @@ variable "broken_links_monitors" {
 variable "cert_check_monitors" {
   type = map(object({
     name                                                   = string
-    apm_nr_entity                                          = optional(string, "")
+    nr_entity                                              = optional(string, "")
     type                                                   = optional(string, "CERT_CHECK")
     domain                                                 = string
     locations_public                                       = optional(list(string), ["US_EAST_1", "EU_WEST_1", "EU_SOUTH_1"])
