@@ -13,6 +13,17 @@ variable "newrelic_resource_name_suffix" {
   default = ""
 }
 
+variable "create_synthetics_checks_alert" {
+  type    = bool
+  default = false
+}
+
+variable "synthetics_checks_threshold" {
+  type        = number
+  default     = 50
+  description = "Limit of checks in 6hours. To reach 10k per month, 80 checks need to be made per 6hours"
+}
+
 variable "simple_monitors" {
   type = map(object({
     name                                                   = string

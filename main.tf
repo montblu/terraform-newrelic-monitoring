@@ -952,3 +952,94 @@ resource "pagerduty_service_integration" "non_critical_events_API_v2" {
   service = pagerduty_service.non_critical[each.key].id
   type    = "events_api_v2_inbound_integration"
 }
+
+##########################
+
+# Synthetics Checks Alerts
+
+##########################
+
+resource "newrelic_notification_destination" "synthetics_checks" {
+  count = var.create_synthetics_checks_alert ? 1 : 0
+
+  name = "${pagerduty_service.non_critical["NewRelic"].name}-Synthetics-Checks-Alert"
+  type = "PAGERDUTY_SERVICE_INTEGRATION"
+
+  property {
+    key   = ""
+    value = ""
+  }
+  auth_token {
+    prefix = "service-integration-id"
+    token  = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+  }
+}
+
+resource "newrelic_alert_policy" "synthetics_checks" {
+  count = var.create_synthetics_checks_alert ? 1 : 0
+
+  name                = "Synthetics-checks-alert-policy"
+  incident_preference = "PER_CONDITION_AND_TARGET"
+}
+
+resource "newrelic_notification_channel" "synthetics_checks" {
+  count = var.create_synthetics_checks_alert ? 1 : 0
+
+  name           = "Synthetics-checks-alert-notification-channel"
+  type           = "PAGERDUTY_SERVICE_INTEGRATION"
+  destination_id = newrelic_notification_destination.synthetics_checks[0].id
+  product        = "IINT"
+  property {
+    key   = "summary"
+    value = "${newrelic_nrql_alert_condition.synthetics_checks[0].description} > ${newrelic_nrql_alert_condition.synthetics_checks[0].critical[0].threshold}"
+  }
+  property {
+    key   = "policy_id"
+    value = newrelic_alert_policy.synthetics_checks[0].id
+  }
+  property {
+    key   = "service_key"
+    value = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+  }
+}
+
+resource "newrelic_nrql_alert_condition" "synthetics_checks" {
+  count = var.create_synthetics_checks_alert ? 1 : 0
+
+  policy_id   = newrelic_alert_policy.synthetics_checks[0].id
+  name        = "Synthetics-checks-alert-condition"
+  description = "Billable synthetics checks in 6 hours"
+  enabled     = true
+
+  nrql {
+    query = "SELECT latest(billableConsumption) AS 'Extra checks' FROM NrMTDConsumption WHERE metric='SyntheticChecks' AND version = '0.4.2' AND consumingAccountId IS NOT NULL"
+  }
+  critical {
+    operator              = "above_or_equals"
+    threshold             = var.synthetics_checks_threshold
+    threshold_duration    = 21600 #6hours
+    threshold_occurrences = "at_least_once"
+  }
+}
+
+resource "newrelic_workflow" "synthetics_checks" {
+  count = var.create_synthetics_checks_alert ? 1 : 0
+
+  name                  = "Synthetics-checks-alerts-workflow"
+  muting_rules_handling = "NOTIFY_ALL_ISSUES"
+
+  issues_filter {
+    name = "workflow-filter"
+    type = "FILTER"
+
+    predicate {
+      attribute = "labels.policyIds"
+      operator  = "EXACTLY_MATCHES"
+      values    = [newrelic_alert_policy.synthetics_checks[0].id]
+    }
+  }
+  destination {
+    channel_id            = newrelic_notification_channel.synthetics_checks[0].id
+    notification_triggers = ["ACTIVATED", "CLOSED"]
+  }
+}
