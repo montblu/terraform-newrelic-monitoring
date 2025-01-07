@@ -4,7 +4,7 @@ locals {
 
   all_monitors = merge(var.simple_monitors, var.browser_monitors, var.script_monitors, var.step_monitors, var.broken_links_monitors, var.cert_check_monitors)
 
-  all_monitor_resources = merge(newrelic_synthetics_monitor.simple, newrelic_synthetics_monitor.browser, newrelic_synthetics_script_monitor.script, newrelic_synthetics_step_monitor.step, newrelic_synthetics_broken_links_monitor.broken_links, newrelic_synthetics_cert_check_monitor.cert_check)
+  all_monitor_resources = merge(newrelic_synthetics_monitor.simple, newrelic_synthetics_script_monitor.script, newrelic_synthetics_step_monitor.step, newrelic_synthetics_broken_links_monitor.broken_links, newrelic_synthetics_cert_check_monitor.cert_check)
 
   # constructs the name string for each monitor in a single location to avoid repetition.
   prefix_suffix_map = { for key, _ in local.all_monitors : key => "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" }
@@ -241,7 +241,7 @@ resource "newrelic_nrql_alert_condition" "critical_health_synthetics" {
   enabled     = true
 
   nrql {
-    query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck where appName = '${each.value.nr_entity}'"
+    query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck where entityGuid IN ('${local.all_monitor_resources[each.key].id}') FACET monitorName"
   }
   critical {
     operator              = each.value["critical_synthetics_operator"]
@@ -265,7 +265,7 @@ resource "newrelic_nrql_alert_condition" "critical_duration_synthetics" {
   enabled     = true
 
   nrql {
-    query = "SELECT percentile(duration, 50) / 1000 FROM SyntheticCheck WHERE appName = '${each.value.nr_entity}'"
+    query = "SELECT percentile(duration, 50) / 1000 FROM SyntheticCheck WHERE entityGuid IN ('${local.all_monitor_resources[each.key].id}') FACET monitorName"
   }
   critical {
     operator              = each.value["critical_duration_synthetics_operator"]
@@ -295,7 +295,7 @@ resource "newrelic_nrql_alert_condition" "noncritical_health_synthetics" {
   enabled     = true
 
   nrql {
-    query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck where appName = '${each.value.nr_entity}'"
+    query = "SELECT filter(count(*), WHERE result = 'FAILED') AS 'Failures' FROM SyntheticCheck WHERE entityGuid IN ('${local.all_monitor_resources[each.key].id}') FACET monitorName"
   }
   warning {
     operator              = each.value["non_critical_synthetics_operator"]
@@ -319,7 +319,7 @@ resource "newrelic_nrql_alert_condition" "non_critical_duration_synthetics" {
   enabled     = true
 
   nrql {
-    query = "SELECT percentile(duration, 50) / 1000 FROM SyntheticCheck WHERE appName = '${each.value.nr_entity}'"
+    query = "SELECT percentile(duration, 50) / 1000 FROM SyntheticCheck WHERE entityGuid IN ('${local.all_monitor_resources[each.key].id}') FACET monitorName"
 
   }
   warning {
