@@ -13,6 +13,28 @@ variable "newrelic_resource_name_suffix" {
   default = ""
 }
 
+variable "newrelic_apm_entities" {
+  type = map(object({
+    create_critical_apm_resources     = optional(bool, false)
+    create_non_critical_apm_resources = optional(bool, false)
+    critical_response_time            = optional(number, 0.7)
+    non_critical_response_time        = optional(number, 0.5)
+    critical_error_rate               = optional(number, 15)
+    non_critical_error_rate           = optional(number, 7)
+  }))
+  default = {}
+}
+
+variable "newrelic_browser_entities" {
+  type = map(object({
+    create_critical_browser_alert     = optional(bool, false)
+    create_non_critical_browser_alert = optional(bool, false)
+    critical_browser_pageload         = optional(number, 7)
+    non_critical_browser_pageload     = optional(number, 3.5)
+  }))
+  default = {}
+}
+
 variable "simple_monitors" {
   type = map(object({
     name                                                   = string
@@ -49,16 +71,10 @@ variable "simple_monitors" {
     non_critical_duration_synthetics_threshold_occurrences = optional(string, "at_least_once")
     non_critical_duration_synthetics_expiration_duration   = optional(number, 600)
     non_critical_duration_synthetics_aggregation_window    = optional(number, 300)
-    critical_response_time                                 = optional(number, 0.7)
-    non_critical_response_time                             = optional(number, 0.5)
-    critical_error_rate                                    = optional(number, 15)
-    non_critical_error_rate                                = optional(number, 7)
     create_non_critical_monitor                            = optional(bool, false)
     create_critical_monitor                                = optional(bool, false)
     create_non_critical_duration_monitor                   = optional(bool, false)
     create_critical_duration_monitor                       = optional(bool, false)
-    create_non_critical_apm_resources                      = optional(bool, false)
-    create_critical_apm_resources                          = optional(bool, false)
   }))
   default = {}
 }
@@ -107,16 +123,6 @@ variable "browser_monitors" {
     create_critical_monitor                                = optional(bool, false)
     create_non_critical_duration_monitor                   = optional(bool, false)
     create_critical_duration_monitor                       = optional(bool, false)
-    create_critical_browser_alert                          = optional(bool, false)
-    create_non_critical_browser_alert                      = optional(bool, false)
-    critical_browser_pageload                              = optional(number, 7)
-    non_critical_browser_pageload                          = optional(number, 3.5)
-    create_non_critical_apm_resources                      = optional(bool, false)
-    create_critical_apm_resources                          = optional(bool, false)
-    critical_response_time                                 = optional(number, 0.7)
-    non_critical_response_time                             = optional(number, 0.5)
-    critical_error_rate                                    = optional(number, 15)
-    non_critical_error_rate                                = optional(number, 7)
   }))
   default = {}
 }
@@ -160,12 +166,6 @@ variable "script_monitors" {
     create_critical_monitor                                = optional(bool, false)
     create_non_critical_duration_monitor                   = optional(bool, false)
     create_critical_duration_monitor                       = optional(bool, false)
-    create_non_critical_apm_resources                      = optional(bool, false)
-    create_critical_apm_resources                          = optional(bool, false)
-    critical_response_time                                 = optional(number, 0.7)
-    non_critical_response_time                             = optional(number, 0.5)
-    critical_error_rate                                    = optional(number, 15)
-    non_critical_error_rate                                = optional(number, 7)
     # SCRIPT_BROWSER only additional values
     enable_screenshot_on_failure_and_script = optional(bool, false)
     browsers                                = optional(list(string), ["CHROME", "FIREFOX"])
@@ -219,12 +219,6 @@ variable "step_monitors" {
     create_critical_monitor                                = optional(bool, false)
     create_non_critical_duration_monitor                   = optional(bool, false)
     create_critical_duration_monitor                       = optional(bool, false)
-    create_non_critical_apm_resources                      = optional(bool, false)
-    create_critical_apm_resources                          = optional(bool, false)
-    critical_response_time                                 = optional(number, 0.7)
-    non_critical_response_time                             = optional(number, 0.5)
-    critical_error_rate                                    = optional(number, 15)
-    non_critical_error_rate                                = optional(number, 7)
   }))
   default = {}
 }
@@ -267,12 +261,6 @@ variable "broken_links_monitors" {
     create_critical_monitor                                = optional(bool, false)
     create_non_critical_duration_monitor                   = optional(bool, false)
     create_critical_duration_monitor                       = optional(bool, false)
-    create_non_critical_apm_resources                      = optional(bool, false)
-    create_critical_apm_resources                          = optional(bool, false)
-    critical_response_time                                 = optional(number, 0.7)
-    non_critical_response_time                             = optional(number, 0.5)
-    critical_error_rate                                    = optional(number, 15)
-    non_critical_error_rate                                = optional(number, 7)
   }))
   default = {}
 }
@@ -316,12 +304,6 @@ variable "cert_check_monitors" {
     create_critical_monitor                                = optional(bool, false)
     create_non_critical_duration_monitor                   = optional(bool, false)
     create_critical_duration_monitor                       = optional(bool, false)
-    create_non_critical_apm_resources                      = optional(bool, false)
-    create_critical_apm_resources                          = optional(bool, false)
-    critical_response_time                                 = optional(number, 0.7)
-    non_critical_response_time                             = optional(number, 0.5)
-    critical_error_rate                                    = optional(number, 15)
-    non_critical_error_rate                                = optional(number, 7)
   }))
   default = {}
 }
