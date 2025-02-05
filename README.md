@@ -15,6 +15,7 @@ Terraform module to create communication between NewRelic and PagerDuty
 | Name | Version |
 |------|---------|
 | <a name="provider_newrelic"></a> [newrelic](#provider\_newrelic) | 3.52.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | n/a |
 | <a name="provider_pagerduty"></a> [pagerduty](#provider\_pagerduty) | 3.4.0 |
 
 ## Modules
@@ -67,6 +68,7 @@ No modules.
 | [newrelic_workflow.non_critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
 | [newrelic_workflow.non_critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
 | [newrelic_workflow.this](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
+| [null_resource.check_unique_monitor_keys](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [pagerduty_service.critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service) | resource |
 | [pagerduty_service.non_critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service) | resource |
 | [pagerduty_service.synthetics_newrelic](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service) | resource |
