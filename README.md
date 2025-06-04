@@ -73,6 +73,7 @@ No modules.
 | [pagerduty_service.non_critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service) | resource |
 | [pagerduty_service.synthetics_newrelic](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service) | resource |
 | [pagerduty_service_integration.critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service_integration) | resource |
+| [pagerduty_service_integration.critical_events_API_v2](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service_integration) | resource |
 | [pagerduty_service_integration.non_critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service_integration) | resource |
 | [pagerduty_service_integration.non_critical_events_API_v2](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service_integration) | resource |
 | [pagerduty_service_integration.synthetics_newrelic](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service_integration) | resource |
