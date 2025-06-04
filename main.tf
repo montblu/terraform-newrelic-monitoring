@@ -952,3 +952,15 @@ resource "pagerduty_service_integration" "non_critical_events_API_v2" {
   service = pagerduty_service.non_critical[each.key].id
   type    = "events_api_v2_inbound_integration"
 }
+
+resource "pagerduty_service_integration" "critical_events_API_v2" {
+
+  for_each = {
+    for key, value in var.pagerduty_services : key => value
+    if lookup(value, "critical", false) && lookup(value, "api", false)
+  }
+
+  name    = "Events API V2"
+  service = pagerduty_service.critical[each.key].id
+  type    = "events_api_v2_inbound_integration"
+}
