@@ -6,17 +6,17 @@ Terraform module to create communication between NewRelic and PagerDuty
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1 |
-| <a name="requirement_newrelic"></a> [newrelic](#requirement\_newrelic) | 3.52.0 |
-| <a name="requirement_pagerduty"></a> [pagerduty](#requirement\_pagerduty) | 3.4.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.4 |
+| <a name="requirement_newrelic"></a> [newrelic](#requirement\_newrelic) | >= 3.52 |
+| <a name="requirement_pagerduty"></a> [pagerduty](#requirement\_pagerduty) | >= 3.5 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_newrelic"></a> [newrelic](#provider\_newrelic) | 3.52.0 |
-| <a name="provider_null"></a> [null](#provider\_null) | n/a |
-| <a name="provider_pagerduty"></a> [pagerduty](#provider\_pagerduty) | 3.4.0 |
+| <a name="provider_newrelic"></a> [newrelic](#provider\_newrelic) | >= 3.52 |
+| <a name="provider_pagerduty"></a> [pagerduty](#provider\_pagerduty) | >= 3.5 |
+| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
 
@@ -26,61 +26,61 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [newrelic_alert_policy.critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/alert_policy) | resource |
-| [newrelic_alert_policy.critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/alert_policy) | resource |
-| [newrelic_alert_policy.critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/alert_policy) | resource |
-| [newrelic_alert_policy.non_critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/alert_policy) | resource |
-| [newrelic_alert_policy.non_critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/alert_policy) | resource |
-| [newrelic_alert_policy.non_critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/alert_policy) | resource |
-| [newrelic_alert_policy.synthetics](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/alert_policy) | resource |
-| [newrelic_notification_channel.critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_channel) | resource |
-| [newrelic_notification_channel.critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_channel) | resource |
-| [newrelic_notification_channel.critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_channel) | resource |
-| [newrelic_notification_channel.non_critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_channel) | resource |
-| [newrelic_notification_channel.non_critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_channel) | resource |
-| [newrelic_notification_channel.non_critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_channel) | resource |
-| [newrelic_notification_channel.synthetics](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_channel) | resource |
-| [newrelic_notification_destination.critical_apm](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_destination) | resource |
-| [newrelic_notification_destination.critical_browser](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_destination) | resource |
-| [newrelic_notification_destination.non_critical_apm](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_destination) | resource |
-| [newrelic_notification_destination.non_critical_browser](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_destination) | resource |
-| [newrelic_notification_destination.synthetics](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/notification_destination) | resource |
-| [newrelic_nrql_alert_condition.critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
-| [newrelic_nrql_alert_condition.critical_duration_synthetics](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
-| [newrelic_nrql_alert_condition.critical_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
-| [newrelic_nrql_alert_condition.critical_health_synthetics](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
-| [newrelic_nrql_alert_condition.critical_response_time](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
-| [newrelic_nrql_alert_condition.non_critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
-| [newrelic_nrql_alert_condition.non_critical_duration_synthetics](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
-| [newrelic_nrql_alert_condition.non_critical_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
-| [newrelic_nrql_alert_condition.non_critical_response_time](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
-| [newrelic_nrql_alert_condition.noncritical_health_synthetics](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/nrql_alert_condition) | resource |
-| [newrelic_synthetics_broken_links_monitor.broken_links](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_broken_links_monitor) | resource |
-| [newrelic_synthetics_cert_check_monitor.cert_check](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_cert_check_monitor) | resource |
-| [newrelic_synthetics_monitor.browser](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_monitor) | resource |
-| [newrelic_synthetics_monitor.simple](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_monitor) | resource |
-| [newrelic_synthetics_script_monitor.script](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_script_monitor) | resource |
-| [newrelic_synthetics_step_monitor.step](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/synthetics_step_monitor) | resource |
-| [newrelic_workflow.critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
-| [newrelic_workflow.critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
-| [newrelic_workflow.critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
-| [newrelic_workflow.non_critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
-| [newrelic_workflow.non_critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
-| [newrelic_workflow.non_critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
-| [newrelic_workflow.this](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/resources/workflow) | resource |
-| [null_resource.check_unique_monitor_keys](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
-| [pagerduty_service.critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service) | resource |
-| [pagerduty_service.non_critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service) | resource |
-| [pagerduty_service.synthetics_newrelic](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service) | resource |
-| [pagerduty_service_integration.critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service_integration) | resource |
-| [pagerduty_service_integration.critical_events_API_v2](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service_integration) | resource |
-| [pagerduty_service_integration.non_critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service_integration) | resource |
-| [pagerduty_service_integration.non_critical_events_API_v2](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service_integration) | resource |
-| [pagerduty_service_integration.synthetics_newrelic](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/resources/service_integration) | resource |
-| [newrelic_entity.apm_entities](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/data-sources/entity) | data source |
-| [newrelic_entity.browser_entities](https://registry.terraform.io/providers/newrelic/newrelic/3.52.0/docs/data-sources/entity) | data source |
-| [pagerduty_escalation_policy.ep](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/data-sources/escalation_policy) | data source |
-| [pagerduty_vendor.vendor](https://registry.terraform.io/providers/PagerDuty/pagerduty/3.4.0/docs/data-sources/vendor) | data source |
+| [newrelic_alert_policy.critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/alert_policy) | resource |
+| [newrelic_alert_policy.critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/alert_policy) | resource |
+| [newrelic_alert_policy.critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/alert_policy) | resource |
+| [newrelic_alert_policy.non_critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/alert_policy) | resource |
+| [newrelic_alert_policy.non_critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/alert_policy) | resource |
+| [newrelic_alert_policy.non_critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/alert_policy) | resource |
+| [newrelic_alert_policy.synthetics](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/alert_policy) | resource |
+| [newrelic_notification_channel.critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_channel) | resource |
+| [newrelic_notification_channel.critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_channel) | resource |
+| [newrelic_notification_channel.critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_channel) | resource |
+| [newrelic_notification_channel.non_critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_channel) | resource |
+| [newrelic_notification_channel.non_critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_channel) | resource |
+| [newrelic_notification_channel.non_critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_channel) | resource |
+| [newrelic_notification_channel.synthetics](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_channel) | resource |
+| [newrelic_notification_destination.critical_apm](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_destination) | resource |
+| [newrelic_notification_destination.critical_browser](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_destination) | resource |
+| [newrelic_notification_destination.non_critical_apm](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_destination) | resource |
+| [newrelic_notification_destination.non_critical_browser](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_destination) | resource |
+| [newrelic_notification_destination.synthetics](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/notification_destination) | resource |
+| [newrelic_nrql_alert_condition.critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/nrql_alert_condition) | resource |
+| [newrelic_nrql_alert_condition.critical_duration_synthetics](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/nrql_alert_condition) | resource |
+| [newrelic_nrql_alert_condition.critical_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/nrql_alert_condition) | resource |
+| [newrelic_nrql_alert_condition.critical_health_synthetics](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/nrql_alert_condition) | resource |
+| [newrelic_nrql_alert_condition.critical_response_time](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/nrql_alert_condition) | resource |
+| [newrelic_nrql_alert_condition.non_critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/nrql_alert_condition) | resource |
+| [newrelic_nrql_alert_condition.non_critical_duration_synthetics](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/nrql_alert_condition) | resource |
+| [newrelic_nrql_alert_condition.non_critical_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/nrql_alert_condition) | resource |
+| [newrelic_nrql_alert_condition.non_critical_response_time](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/nrql_alert_condition) | resource |
+| [newrelic_nrql_alert_condition.noncritical_health_synthetics](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/nrql_alert_condition) | resource |
+| [newrelic_synthetics_broken_links_monitor.broken_links](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/synthetics_broken_links_monitor) | resource |
+| [newrelic_synthetics_cert_check_monitor.cert_check](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/synthetics_cert_check_monitor) | resource |
+| [newrelic_synthetics_monitor.browser](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/synthetics_monitor) | resource |
+| [newrelic_synthetics_monitor.simple](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/synthetics_monitor) | resource |
+| [newrelic_synthetics_script_monitor.script](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/synthetics_script_monitor) | resource |
+| [newrelic_synthetics_step_monitor.step](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/synthetics_step_monitor) | resource |
+| [newrelic_workflow.critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/workflow) | resource |
+| [newrelic_workflow.critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/workflow) | resource |
+| [newrelic_workflow.critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/workflow) | resource |
+| [newrelic_workflow.non_critical_apm_error_rate](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/workflow) | resource |
+| [newrelic_workflow.non_critical_apm_response_time](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/workflow) | resource |
+| [newrelic_workflow.non_critical_browser_pageload](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/workflow) | resource |
+| [newrelic_workflow.this](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/resources/workflow) | resource |
+| [pagerduty_service.critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/service) | resource |
+| [pagerduty_service.non_critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/service) | resource |
+| [pagerduty_service.synthetics_newrelic](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/service) | resource |
+| [pagerduty_service_integration.critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/service_integration) | resource |
+| [pagerduty_service_integration.critical_events_API_v2](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/service_integration) | resource |
+| [pagerduty_service_integration.non_critical](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/service_integration) | resource |
+| [pagerduty_service_integration.non_critical_events_API_v2](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/service_integration) | resource |
+| [pagerduty_service_integration.synthetics_newrelic](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/service_integration) | resource |
+| [terraform_data.check_unique_monitor_keys](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
+| [newrelic_entity.apm_entities](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/data-sources/entity) | data source |
+| [newrelic_entity.browser_entities](https://registry.terraform.io/providers/newrelic/newrelic/latest/docs/data-sources/entity) | data source |
+| [pagerduty_escalation_policy.ep](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/escalation_policy) | data source |
+| [pagerduty_vendor.vendor](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/vendor) | data source |
 
 ## Inputs
 
