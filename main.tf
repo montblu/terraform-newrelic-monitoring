@@ -9,7 +9,7 @@ locals {
   # constructs the name string for each monitor in a single location to avoid repetition.
   prefix_suffix_map         = { for key, _ in local.all_monitors : key => "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" }
   apm_prefix_suffix_map     = { for key, _ in var.newrelic_apm_entities : key => "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" }
-  browser_prefix_suffix_map = { for key, _ in var.newrelic_apm_entities : key => "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" }
+  browser_prefix_suffix_map = { for key, _ in var.newrelic_browser_entities : key => "${local.nr_entity_prefix}${key}${local.nr_entity_suffix}" }
 }
 
 data "newrelic_entity" "apm_entities" {
