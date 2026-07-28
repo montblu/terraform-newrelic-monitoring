@@ -130,7 +130,7 @@ resource "newrelic_alert_policy" "synthetics" {
 resource "newrelic_notification_destination" "synthetics" {
   for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
 
-  name = pagerduty_service.synthetics_newrelic[each.key].name
+  name = var.synthetics_pagerduty_services[each.key].name
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
   property {
@@ -139,7 +139,7 @@ resource "newrelic_notification_destination" "synthetics" {
   }
   auth_token {
     prefix = "service-integration-id"
-    token  = pagerduty_service_integration.synthetics_newrelic[each.key].integration_key
+    token  = var.synthetics_pagerduty_services[each.key].integration_key
   }
 }
 
@@ -161,7 +161,7 @@ resource "newrelic_notification_channel" "synthetics" {
   }
   property {
     key   = "service_key"
-    value = pagerduty_service_integration.synthetics_newrelic[each.key].integration_key
+    value = var.synthetics_pagerduty_services[each.key].integration_key
   }
 }
 
@@ -298,35 +298,6 @@ resource "newrelic_nrql_alert_condition" "non_critical_duration_synthetics" {
 
 ##########################
 
-# Pagerduty Synthetics resources
-
-##########################
-
-resource "pagerduty_service" "synthetics_newrelic" {
-  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
-
-  name                    = "NewRelic-synthetics-${local.prefix_suffix_map[each.key]}"
-  auto_resolve_timeout    = "null"
-  acknowledgement_timeout = 600
-  escalation_policy       = data.pagerduty_escalation_policy.ep.id
-  alert_creation          = "create_alerts_and_incidents"
-
-  incident_urgency_rule {
-    type    = "constant"
-    urgency = lookup(each.value, "create_critical_monitor", false) ? "high" : "low"
-  }
-}
-
-resource "pagerduty_service_integration" "synthetics_newrelic" {
-  for_each = { for key, value in local.all_monitors : key => value if value.create_non_critical_monitor || value.create_critical_monitor }
-
-  name    = data.pagerduty_vendor.vendor["New Relic"].name
-  service = pagerduty_service.synthetics_newrelic[each.key].id
-  vendor  = data.pagerduty_vendor.vendor["New Relic"].id
-}
-
-##########################
-
 # Critical APM Resources
 
 ##########################
@@ -349,7 +320,7 @@ resource "newrelic_notification_destination" "critical_apm" {
   # we create only one
   count = length({ for key, value in var.newrelic_apm_entities : key => value if value.create_critical_apm_resources }) > 0 ? 1 : 0
 
-  name = "${pagerduty_service.critical["NewRelic"].name}-APM"
+  name = "${var.critical_pagerduty_service.name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
   property {
@@ -358,7 +329,7 @@ resource "newrelic_notification_destination" "critical_apm" {
   }
   auth_token {
     prefix = "service-integration-id"
-    token  = pagerduty_service_integration.critical["NewRelic"].integration_key
+    token  = var.critical_pagerduty_service.integration_key
   }
 }
 
@@ -380,7 +351,7 @@ resource "newrelic_notification_channel" "critical_apm_response_time" {
   }
   property {
     key   = "service_key"
-    value = pagerduty_service_integration.critical["NewRelic"].integration_key
+    value = var.critical_pagerduty_service.integration_key
   }
 }
 
@@ -402,7 +373,7 @@ resource "newrelic_notification_channel" "critical_apm_error_rate" {
   }
   property {
     key   = "service_key"
-    value = pagerduty_service_integration.critical["NewRelic"].integration_key
+    value = var.critical_pagerduty_service.integration_key
   }
 }
 
@@ -494,11 +465,10 @@ resource "newrelic_workflow" "critical_apm_error_rate" {
 
 ##########################
 
-
 resource "newrelic_notification_destination" "non_critical_apm" {
   count = length({ for key, value in var.newrelic_apm_entities : key => value if value.create_non_critical_apm_resources }) > 0 ? 1 : 0
 
-  name = "${pagerduty_service.non_critical["NewRelic"].name}-APM"
+  name = "${var.non_critical_pagerduty_service.name}-APM"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
   property {
@@ -507,7 +477,7 @@ resource "newrelic_notification_destination" "non_critical_apm" {
   }
   auth_token {
     prefix = "service-integration-id"
-    token  = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+    token  = var.non_critical_pagerduty_service.integration_key
   }
 }
 
@@ -544,7 +514,7 @@ resource "newrelic_notification_channel" "non_critical_apm_response_time" {
   }
   property {
     key   = "service_key"
-    value = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+    value = var.non_critical_pagerduty_service.integration_key
   }
 }
 
@@ -565,7 +535,7 @@ resource "newrelic_notification_channel" "non_critical_apm_error_rate" {
   }
   property {
     key   = "service_key"
-    value = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+    value = var.non_critical_pagerduty_service.integration_key
   }
 }
 
@@ -660,7 +630,7 @@ resource "newrelic_workflow" "non_critical_apm_error_rate" {
 resource "newrelic_notification_destination" "non_critical_browser" {
   count = length({ for key, value in var.newrelic_browser_entities : key => value if value.create_non_critical_browser_alert }) > 0 ? 1 : 0
 
-  name = "${pagerduty_service.non_critical["NewRelic"].name}-Browser"
+  name = "${var.non_critical_pagerduty_service.name}-Browser"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
   property {
@@ -669,7 +639,7 @@ resource "newrelic_notification_destination" "non_critical_browser" {
   }
   auth_token {
     prefix = "service-integration-id"
-    token  = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+    token  = var.non_critical_pagerduty_service.integration_key
   }
 }
 
@@ -697,7 +667,7 @@ resource "newrelic_notification_channel" "non_critical_browser_pageload" {
   }
   property {
     key   = "service_key"
-    value = pagerduty_service_integration.non_critical["NewRelic"].integration_key
+    value = var.non_critical_pagerduty_service.integration_key
   }
 }
 
@@ -751,7 +721,7 @@ resource "newrelic_workflow" "non_critical_browser_pageload" {
 resource "newrelic_notification_destination" "critical_browser" {
   count = length({ for key, value in var.newrelic_browser_entities : key => value if value.create_critical_browser_alert }) > 0 ? 1 : 0
 
-  name = "${pagerduty_service.critical["NewRelic"].name}-Browser"
+  name = "${var.critical_pagerduty_service.name}-Browser"
   type = "PAGERDUTY_SERVICE_INTEGRATION"
 
   property {
@@ -760,7 +730,7 @@ resource "newrelic_notification_destination" "critical_browser" {
   }
   auth_token {
     prefix = "service-integration-id"
-    token  = pagerduty_service_integration.critical["NewRelic"].integration_key
+    token  = var.critical_pagerduty_service.integration_key
   }
 }
 
@@ -788,7 +758,7 @@ resource "newrelic_notification_channel" "critical_browser_pageload" {
   }
   property {
     key   = "service_key"
-    value = pagerduty_service_integration.critical["NewRelic"].integration_key
+    value = var.critical_pagerduty_service.integration_key
   }
 }
 
@@ -833,95 +803,13 @@ resource "newrelic_workflow" "critical_browser_pageload" {
   }
 }
 
-##########################
-
-# Pagerduty Resources
-
-##########################
-
-
-resource "pagerduty_service" "critical" {
-
-  for_each = {
-    for key, value in var.pagerduty_services : key => value
-    if lookup(value, "critical", false)
+# Since all monitor maps are merged, all keys between different types of monitors need to be unique to avoid 
+# overwriting values.
+resource "terraform_data" "check_unique_monitor_keys" {
+  lifecycle {
+    precondition {
+      condition     = length(local.all_monitor_keys) == length(local.all_distinct_monitor_keys)
+      error_message = "Monitor keys need to be unique among all monitor objects."
+    }
   }
-
-  name                    = "${local.nr_entity_prefix}${each.key}${local.nr_entity_suffix}-Critical"
-  auto_resolve_timeout    = "null"
-  acknowledgement_timeout = 600
-  escalation_policy       = data.pagerduty_escalation_policy.ep.id
-  alert_creation          = "create_alerts_and_incidents"
-
-  incident_urgency_rule {
-    type    = "constant"
-    urgency = "high"
-  }
-}
-
-resource "pagerduty_service_integration" "critical" {
-
-  for_each = {
-    for key, value in var.pagerduty_services : key => value
-    if lookup(value, "critical", false) && !lookup(value, "api", false)
-  }
-
-  name    = data.pagerduty_vendor.vendor[each.value.vendor].name
-  service = pagerduty_service.critical[each.key].id
-  vendor  = data.pagerduty_vendor.vendor[each.value.vendor].id
-}
-
-resource "pagerduty_service" "non_critical" {
-
-  for_each = {
-    for key, value in var.pagerduty_services : key => value
-    if lookup(value, "non_critical", false)
-  }
-
-  name                    = "${local.nr_entity_prefix}${each.key}${local.nr_entity_suffix}-Non_Critical"
-  auto_resolve_timeout    = "null"
-  acknowledgement_timeout = 600
-  escalation_policy       = data.pagerduty_escalation_policy.ep.id
-  alert_creation          = "create_alerts_and_incidents"
-
-  incident_urgency_rule {
-    type    = "constant"
-    urgency = "low"
-  }
-}
-
-resource "pagerduty_service_integration" "non_critical" {
-
-  for_each = {
-    for key, value in var.pagerduty_services : key => value
-    if lookup(value, "non_critical", false) && !lookup(value, "api", false)
-  }
-
-  name    = data.pagerduty_vendor.vendor[each.value.vendor].name
-  service = pagerduty_service.non_critical[each.key].id
-  vendor  = data.pagerduty_vendor.vendor[each.value.vendor].id
-}
-
-resource "pagerduty_service_integration" "non_critical_events_API_v2" {
-
-  for_each = {
-    for key, value in var.pagerduty_services : key => value
-    if lookup(value, "non_critical", false) && lookup(value, "api", false)
-  }
-
-  name    = "Events API V2"
-  service = pagerduty_service.non_critical[each.key].id
-  type    = "events_api_v2_inbound_integration"
-}
-
-resource "pagerduty_service_integration" "critical_events_API_v2" {
-
-  for_each = {
-    for key, value in var.pagerduty_services : key => value
-    if lookup(value, "critical", false) && lookup(value, "api", false)
-  }
-
-  name    = "Events API V2"
-  service = pagerduty_service.critical[each.key].id
-  type    = "events_api_v2_inbound_integration"
 }
