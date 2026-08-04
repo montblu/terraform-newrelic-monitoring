@@ -12,7 +12,7 @@ resource "newrelic_synthetics_monitor" "simple" {
   type                = each.value["type"]
   period              = each.value["period"]
   status              = each.value["status"]
-  locations_public    = each.value["locations_public"]
+  locations_public    = local.locations_public[each.key]
   uri                 = each.value["uri"]
   validation_string   = each.value["validation_string"]
   verify_ssl          = each.value["verify_ssl"]
@@ -34,7 +34,7 @@ resource "newrelic_synthetics_monitor" "browser" {
   type                 = each.value["type"]
   period               = each.value["period"]
   status               = each.value["status"]
-  locations_public     = each.value["locations_public"]
+  locations_public     = local.locations_public[each.key]
   uri                  = each.value["uri"]
   validation_string    = each.value["validation_string"]
   runtime_type         = each.value["runtime_type"]
@@ -59,7 +59,7 @@ resource "newrelic_synthetics_script_monitor" "script" {
   type                                    = each.value["type"]
   period                                  = each.value["period"]
   status                                  = each.value["status"]
-  locations_public                        = each.value["locations_public"]
+  locations_public                        = local.locations_public[each.key]
   runtime_type                            = lookup(each.value, "type") == "SCRIPT_API" ? each.value["runtime_type"] : "CHROME_BROWSER"
   runtime_type_version                    = lookup(each.value, "type") == "SCRIPT_API" ? each.value["runtime_type_version"] : "100"
   script_language                         = each.value["script_language"]
@@ -75,7 +75,7 @@ resource "newrelic_synthetics_step_monitor" "step" {
 
   name                                    = local.prefix_suffix_map[each.key]
   enable_screenshot_on_failure_and_script = each.value["enable_screenshot_on_failure_and_script"]
-  locations_public                        = each.value["locations_public"]
+  locations_public                        = local.locations_public[each.key]
   period                                  = each.value["period"]
   status                                  = each.value["status"]
   runtime_type                            = each.value["runtime_type"]
@@ -98,7 +98,7 @@ resource "newrelic_synthetics_broken_links_monitor" "broken_links" {
 
   name                 = local.prefix_suffix_map[each.key]
   uri                  = each.value["uri"]
-  locations_public     = each.value["locations_public"]
+  locations_public     = local.locations_public[each.key]
   period               = each.value["period"]
   status               = each.value["status"]
   runtime_type         = each.value["runtime_type"]
@@ -111,7 +111,7 @@ resource "newrelic_synthetics_cert_check_monitor" "cert_check" {
 
   name                   = local.prefix_suffix_map[each.key]
   domain                 = each.value["domain"]
-  locations_public       = each.value["locations_public"]
+  locations_public       = local.locations_public[each.key]
   certificate_expiration = each.value["certificate_expiration"]
   period                 = each.value["period"]
   status                 = each.value["status"]

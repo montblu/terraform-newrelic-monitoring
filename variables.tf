@@ -13,7 +13,7 @@ variable "broken_links_monitors" {
     name                                                   = string
     type                                                   = optional(string, "BROKEN_LINKS")
     uri                                                    = string
-    locations_public                                       = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
+    locations_public                                       = optional(list(string), ["US_EAST_1", "EU_WEST_1", "EU_SOUTH_1"])
     period                                                 = optional(string, "EVERY_5_MINUTES")
     status                                                 = optional(string, "ENABLED")
     runtime_type                                           = optional(string, "NODE_API")
@@ -57,7 +57,7 @@ variable "browser_monitors" {
     type                                                   = optional(string, "BROWSER")
     period                                                 = optional(string, "EVERY_5_MINUTES")
     status                                                 = optional(string, "ENABLED")
-    locations_public                                       = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
+    locations_public                                       = optional(list(string), ["US_EAST_1", "EU_WEST_1", "EU_SOUTH_1"])
     validation_string                                      = optional(string, "")
     verify_ssl                                             = optional(bool, true)
     custom_header                                          = optional(list(map(string)))
@@ -168,7 +168,7 @@ variable "script_monitors" {
     name                                                   = string
     type                                                   = optional(string, "SCRIPT_API") # SCRIPT_API or SCRIPT_BROWSER
     status                                                 = optional(string, "ENABLED")
-    locations_public                                       = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
+    locations_public                                       = optional(list(string), ["US_EAST_1", "EU_WEST_1", "EU_SOUTH_1"])
     period                                                 = optional(string, "EVERY_5_MINUTES")
     script                                                 = string
     runtime_type                                           = optional(string, "NODE_API")
@@ -217,7 +217,7 @@ variable "simple_monitors" {
     type                                                   = optional(string, "SIMPLE")
     period                                                 = optional(string, "EVERY_5_MINUTES")
     status                                                 = optional(string, "ENABLED")
-    locations_public                                       = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
+    locations_public                                       = optional(list(string), ["US_EAST_1", "EU_WEST_1", "EU_SOUTH_1"])
     validation_string                                      = optional(string, "")
     verify_ssl                                             = optional(bool, true)
     bypass_head_request                                    = optional(bool, false)
@@ -259,7 +259,7 @@ variable "step_monitors" {
     name                                    = string
     type                                    = optional(string, "STEP")
     enable_screenshot_on_failure_and_script = optional(bool, false)
-    locations_public                        = optional(list(string), ["AWS_US_EAST_1", "AWS_EU_WEST_1", "AWS_EU_SOUTH_1"])
+    locations_public                        = optional(list(string), ["US_EAST_1", "EU_WEST_1", "EU_SOUTH_1"])
     period                                  = optional(string, "EVERY_5_MINUTES")
     status                                  = optional(string, "ENABLED")
     runtime_type                            = optional(string, "CHROME_BROWSER")
