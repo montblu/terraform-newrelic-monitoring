@@ -18,6 +18,10 @@ locals {
   ]
 
   all_monitor_keys = flatten([for i in local.all_monitors_list : keys(i)])
+  locations_public = {
+    for key, value in local.all_monitors :
+    key => [for location in value.locations_public : replace(location, "/^AWS_/", "")]
+  }
 
   # checks for all distinct keys only
   all_distinct_monitor_keys = distinct(local.all_monitor_keys)

@@ -1,4 +1,4 @@
-# Since all monitor maps are merged, all keys between different types of monitors need to be unique to avoid 
+# Since all monitor maps are merged, all keys between different types of monitors need to be unique to avoid
 # overwriting values.
 resource "terraform_data" "check_unique_monitor_keys" {
   lifecycle {
