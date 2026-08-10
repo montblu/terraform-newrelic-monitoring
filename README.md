@@ -99,7 +99,7 @@ No outputs.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_newrelic"></a> [newrelic](#provider\_newrelic) | 3.96.0 |
+| <a name="provider_newrelic"></a> [newrelic](#provider\_newrelic) | 3.96.1 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules

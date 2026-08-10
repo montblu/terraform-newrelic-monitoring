@@ -308,7 +308,8 @@ variable "synthetics_pagerduty_services" {
     name            = string
     integration_key = string
   }))
-  default = {}
+  default   = {}
+  sensitive = true
 }
 
 variable "critical_pagerduty_service" {
